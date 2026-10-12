@@ -7,8 +7,6 @@ import { defaultContent, type EventContent } from '@/lib/content';
 import { MediaField } from './MediaField';
 import { Notice } from './ui';
 
-const TOKENS = '{name} {host} {theme} {date} {dateShort} {time} {startTime} {city} {location} {price} {capacity} {tribeCapacity} {tribeMap} {contact} {takeOff} {destination} {hostUpper} {nameUpper}';
-
 type Path = (string | number)[];
 function getAt(obj: unknown, path: Path): unknown {
   return path.reduce<unknown>((o, k) => (o as Record<string | number, unknown>)?.[k], obj);
@@ -92,12 +90,6 @@ export function ContentEditor({ eventId, initial }: { eventId: string; initial: 
         });
       }}
     >
-      <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
-        <p className="font-semibold">Tokens fill in automatically from your event details:</p>
-        <p className="mt-1 font-mono text-xs leading-6">{TOKENS}</p>
-        <p className="mt-1 text-xs">Use a new line where the design breaks a headline onto two lines.</p>
-      </div>
-
       <Section title="Hero & film" defaultOpen>
         <Text path={['hero', 'perGuestSuffix']} label="After the price" />
         <Text path={['hero', 'ctaLabel']} label="Book button label" />
