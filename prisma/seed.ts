@@ -45,10 +45,10 @@ async function main() {
       },
       tribes: {
         create: [
-          { position: 0, element: 'Fire', name: 'Hot', colorName: 'Red', colorHex: '#B42150', tagline: 'Turn up the heat.', image: '/assets/coast-1.png', capacity: 50 },
-          { position: 1, element: 'Air', name: 'Spicy', colorName: 'Yellow', colorHex: '#FBD839', tagline: 'Bring a little extra.', image: '/assets/coast-3.png', capacity: 50 },
-          { position: 2, element: 'Water', name: 'Drip', colorName: 'Blue', colorHex: '#0684E5', tagline: 'Make waves. Serve looks.', image: '/assets/coast-4.png', capacity: 50 },
-          { position: 3, element: 'Earth', name: 'Wild', colorName: 'Green', colorHex: '#6F915F', tagline: 'Let your wild side out.', image: '/assets/people-2.png', capacity: 50 },
+          { position: 0, element: 'Fire', name: 'Hot', colorName: 'Red', colorHex: '#B42150', tagline: 'Turn up the heat.', image: 'https://res.cloudinary.com/dtvjiura5/image/upload/f_auto,q_auto,w_1920,c_limit/v1791837782/coastal-carnival/coast-1', capacity: 50 },
+          { position: 1, element: 'Air', name: 'Spicy', colorName: 'Yellow', colorHex: '#FBD839', tagline: 'Bring a little extra.', image: 'https://res.cloudinary.com/dtvjiura5/image/upload/f_auto,q_auto,w_1920,c_limit/v1791837784/coastal-carnival/coast-3', capacity: 50 },
+          { position: 2, element: 'Water', name: 'Drip', colorName: 'Blue', colorHex: '#0684E5', tagline: 'Make waves. Serve looks.', image: 'https://res.cloudinary.com/dtvjiura5/image/upload/f_auto,q_auto,w_1920,c_limit/v1791837785/coastal-carnival/coast-4', capacity: 50 },
+          { position: 3, element: 'Earth', name: 'Wild', colorName: 'Green', colorHex: '#6F915F', tagline: 'Let your wild side out.', image: 'https://res.cloudinary.com/dtvjiura5/image/upload/f_auto,q_auto,w_1920,c_limit/v1791837789/coastal-carnival/people-2', capacity: 50 },
         ],
       },
     },

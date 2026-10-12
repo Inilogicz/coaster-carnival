@@ -30,7 +30,7 @@ export function Sidebar({ events, adminEmail }: { events: EventOption[]; adminEm
       <div className="flex items-center justify-between px-5 py-4 lg:block lg:py-6">
         <Link href="/admin" className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/wildlings-logo-transparent.png" alt="" className="h-10 w-8 object-contain invert" />
+          <img src="https://res.cloudinary.com/dtvjiura5/image/upload/f_auto,q_auto,w_400,c_limit/v1791837791/coastal-carnival/wildlings-logo-transparent" alt="" className="h-10 w-8 object-contain invert" />
           <span className="text-xs font-extrabold tracking-[.12em]">
             EVENT DASHBOARD
             <span className="block text-[10px] font-medium tracking-[.14em] text-white/60">ORGANISER</span>
