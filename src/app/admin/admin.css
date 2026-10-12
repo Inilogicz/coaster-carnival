@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --color-brand: #159fa3;
+  --color-brand-dark: #08787b;
+  --color-ink: #202020;
+}
+
+@layer base {
+  button:not(:disabled), [role="button"]:not(:disabled) { cursor: pointer; }
+}
+
+@utility input {
+  @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-xs outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/25 disabled:bg-slate-100;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60;
+}
+@utility btn-primary {
+  @apply btn bg-brand text-white hover:bg-brand-dark;
+}
+@utility btn-secondary {
+  @apply btn border border-slate-300 bg-white text-slate-800 hover:bg-slate-50;
+}
+@utility btn-danger {
+  @apply btn border border-rose-200 bg-white text-rose-700 hover:bg-rose-50;
+}
+@utility card {
+  @apply rounded-xl border border-slate-200 bg-white shadow-xs;
+}
+@utility label {
+  @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500;
+}

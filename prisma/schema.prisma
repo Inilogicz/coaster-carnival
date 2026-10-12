@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Event {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  isActive      Boolean  @default(false)
+  bookingOpen   Boolean  @default(true)
+  name          String
+  host          String
+  theme         String
+  date          String // YYYY-MM-DD, kept as a calendar date to avoid timezone shifts
+  startTime     String // short form, e.g. "3pm"
+  timeLabel     String // long form, e.g. "3pm till dawn"
+  city          String // e.g. "Lagos"
+  location      String // e.g. "Lagos, Nigeria"
+  takeOffPoint  String
+  destination   String
+  capacity      Int
+  currency      String   @default("NGN")
+  contactPhone  String
+  refundPolicy  String
+  content       Json // all editable page copy and media, see src/lib/content.ts
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  ticketTypes   TicketType[]
+  tribes        Tribe[]
+  registrations Registration[]
+}
+
+model TicketType {
+  id          String   @id @default(cuid())
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name        String
+  description String   @default("")
+  price       Int // in kobo; 0 means free
+  quantity    Int? // null means limited only by event capacity
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  registrations Registration[]
+
+  @@index([eventId])
+}
+
+model Tribe {
+  id        String @id @default(cuid())
+  eventId   String
+  event     Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  position  Int // 0 Fire, 1 Air, 2 Water, 3 Earth
+  element   String
+  name      String
+  colorName String
+  colorHex  String
+  tagline   String
+  image     String
+  capacity  Int
+
+  registrations Registration[] @relation("AssignedTribe")
+
+  @@unique([eventId, position])
+}
+
+enum RegistrationStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+model Registration {
+  id               String             @id @default(cuid())
+  reference        String             @unique
+  eventId          String
+  event            Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  ticketTypeId     String
+  ticketType       TicketType         @relation(fields: [ticketTypeId], references: [id])
+  status           RegistrationStatus @default(PENDING)
+  amount           Int // kobo, copied from the ticket at booking time
+  fullName         String
+  email            String
+  phone            String
+  gender           String
+  birthMonth       Int
+  birthDay         Int
+  zodiacSign       String
+  zodiacElement    String
+  emergencyContact String
+  instagram        String?
+  tribeId          String?
+  tribe            Tribe?             @relation("AssignedTribe", fields: [tribeId], references: [id])
+  tribeReassigned  Boolean            @default(false)
+  overCapacity     Boolean            @default(false)
+  holdExpiresAt    DateTime
+  paidAt           DateTime?
+  emailSentAt      DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  payments Payment[]
+
+  @@unique([eventId, email])
+  @@index([eventId, status])
+}
+
+enum PaymentStatus {
+  INITIALIZED
+  SUCCESS
+  FAILED
+  ABANDONED
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  registrationId String
+  registration   Registration  @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  reference      String        @unique // Paystack transaction reference
+  amount         Int // kobo
+  currency       String
+  status         PaymentStatus @default(INITIALIZED)
+  channel        String?
+  paystackId     String?
+  gatewayMessage String?
+  paidAt         DateTime?
+  raw            Json?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([registrationId])
+  @@index([status, createdAt])
+}

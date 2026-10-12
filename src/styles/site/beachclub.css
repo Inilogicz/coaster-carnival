@@ -1,0 +1,62 @@
+/* Mixed coastal editorial design. */
+body{background:#faf7ef;color:#001f54}
+body:not(.is-registering) .header{background:#faf7ef;padding:16px 4vw}
+.brand-sub{letter-spacing:.14em}.nav-cta,.primary{border-radius:40px;background:#ff4965;color:#fff;box-shadow:none;border:0}.nav-cta:hover,.primary:hover{background:#d93050;color:#fff;box-shadow:none}
+.club-hero{display:flex;flex-direction:column;background:#faf7ef;color:#001f54;overflow:hidden}
+.hero-film{order:0;aspect-ratio:auto;height:clamp(380px,48vw,540px);min-height:0;max-height:none;width:100%;background:#001f54;align-self:stretch}
+.hero-film .hero-image{object-fit:cover;object-position:center 48%;opacity:1}
+.hero-film .hero-video{object-fit:contain;background:transparent}
+.hero-film:before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#001f5420,transparent 30%,transparent 70%,#001f5420);pointer-events:none}
+.hero-video-controls{left:auto;right:22px;bottom:18px;justify-content:flex-end}.sound-hint{left:auto;right:22px;bottom:72px;width:max-content;max-width:80%}
+.club-hero-copy{order:1;padding:30px 24px 23px;width:100%;align-items:center;text-align:center;position:relative;isolation:isolate;overflow:hidden}
+.club-hero-copy:before,.club-hero-copy:after{content:'';position:absolute;z-index:-1;width:140px;height:140px;border-radius:65% 35% 60% 40%;top:25px;transform:rotate(-30deg)}
+.club-hero-copy:before{left:-70px;background:#00b9bc}.club-hero-copy:after{right:-80px;background:#ffcf30;transform:rotate(35deg)}
+.club-hero .eyebrow{color:#001f54;letter-spacing:.27em;font-size:.65rem;margin:0 0 14px}
+.club-hero h1{font:500 clamp(2.4rem,4.8vw,4.8rem)/1.08 Georgia,'Times New Roman',serif;letter-spacing:-.045em;color:#001f54;margin:0 0 20px;text-shadow:none;max-width:1100px}
+.club-hero h1 br{display:none}.club-hero h1 em{font-weight:400;white-space:nowrap}.hero-bottom{color:#001f54;font-size:.72rem;margin:15px 0 0}.club-hero .primary{padding:14px 29px;font-size:.85rem;text-transform:none}
+.club-details{margin:0 5vw;padding:22px 0;background:transparent;border-top:1px solid #001f5425;gap:15px}.club-details strong{font-family:Georgia,serif;font-weight:400;font-size:1.05rem}.club-details span{color:#001f548c;font-size:.58rem}.club-details>div+div{border-left:1px solid #001f5425}
+.club-section{padding:55px 5vw}.section-heading h2,.club-welcome h2{font-family:Georgia,serif;font-weight:500;letter-spacing:-.03em}.tribes-section{background:#faf7ef}.club-welcome{background:#bde9e4}.club-welcome .primary{background:#ff4965;color:white}.tribe{border-radius:5px}.club-finale .primary{background:#ff4965;color:white}.mixed-gallery figure,.mixed-gallery img{border-radius:4px}
+@media(max-width:900px){.header{gap:12px}.club-nav{gap:22px}.hero-film{height:430px}.club-hero h1{font-size:3.2rem}.club-hero h1 br{display:block}}
+@media(max-width:600px){body:not(.is-registering) .header{padding:12px 5vw}.wildlings-mark{width:35px;height:42px;flex-basis:35px}.brand{font-size:.7rem}.brand-sub{font-size:.45rem}.nav-cta{font-size:.6rem;padding:10px 13px}.club-nav{font-size:.65rem;padding-top:3px}.hero-film{height:360px;width:100%;aspect-ratio:auto}.club-hero-copy{padding:26px 18px 22px}.club-hero h1{font-size:clamp(2rem,8.5vw,3.2rem);margin-bottom:18px}.club-hero h1 em{white-space:normal}.club-hero .eyebrow{font-size:.57rem;letter-spacing:.18em}.club-hero-copy:before,.club-hero-copy:after{width:90px;height:100px;top:30px}.club-hero-copy:before{left:-65px}.club-hero-copy:after{right:-65px}.hero-video-controls{right:10px;bottom:12px;gap:4px}.hero-video-controls button{padding:9px 10px;font-size:.6rem}.sound-hint{right:10px;bottom:63px;font-size:.6rem}.club-details{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 10px;padding:20px 0}.club-details>div:nth-child(3){border-left:0}.club-details strong{font-size:.93rem}.club-section{padding:40px 5vw}}
+/* FINNS-inspired media-first beach club composition, with Wildlings branding. */
+body{background:#fff;color:#202020}
+body:not(.is-registering) .header{background:#202020;color:#fff;border:0;padding:15px 4vw;min-height:82px}
+body:not(.is-registering) .brand-sub{color:#fff}.wildlings-mark img{filter:invert(1)}.club-nav{font-weight:700;letter-spacing:.06em;font-size:.72rem}.nav-cta,.primary{background:#fff;color:#159fa3;border-radius:8px;font-weight:800}.nav-cta:hover{background:#dbf6f4;color:#08787b}
+.club-hero{background:#fff;color:#202020}.hero-film{height:clamp(380px,43vw,620px);background:#202020}.hero-film .hero-image{object-position:center 48%}.hero-film .hero-video{object-fit:contain}.club-hero-copy:before,.club-hero-copy:after{display:none}.club-hero-copy{padding:45px 24px 35px}.club-hero .eyebrow{color:#159fa3;font-size:.7rem;letter-spacing:.16em}.club-hero h1{font:900 clamp(2.2rem,4.5vw,4.5rem)/1.03 Arial,sans-serif;color:#202020;letter-spacing:-.055em;margin-bottom:18px}.club-hero h1 br{display:block}.hero-bottom{color:#444;font-size:1rem;line-height:1.8;margin-top:18px}.club-hero .primary,.club-welcome .primary,.club-finale .primary{background:#159fa3;color:white;padding:15px 30px;border-radius:7px;text-transform:uppercase}.primary:hover{background:#08787b;color:white}.club-details{background:#f1f7f6;margin:0;padding:25px 5vw;border:0}.club-details strong{font:700 1.05rem Arial,sans-serif;color:#202020}.club-details span{color:#159fa3}.club-section{padding:45px 4vw}.section-heading{text-align:left;max-width:none;border-bottom:1px solid #159fa3;padding-bottom:18px}.section-heading h2,.club-welcome h2{font:900 clamp(1.8rem,3vw,3rem)/1.08 Arial,sans-serif;color:#202020;text-transform:uppercase;letter-spacing:-.04em}.section-heading>p:last-child{margin:0;max-width:750px}.section-heading .eyebrow{color:#159fa3}.experience-grid article{border-radius:14px;min-height:370px}.experience-grid h3{font-size:1.9rem}.club-welcome{background:#f1f7f6}.tribes-section{background:#fff}.tribe{border-radius:14px;min-height:390px}.mixed-gallery figure,.mixed-gallery img{border-radius:12px}.club-finale{background:#202020;color:white}.club-finale h2{font:900 clamp(2.4rem,4.5vw,4.7rem)/1.05 Arial,sans-serif}.club-finale .eyebrow{color:#8bd9d5}footer{background:#202020;color:white}
+@media(max-width:600px){body:not(.is-registering) .header{padding:12px 5vw;min-height:76px}.brand{font-size:.7rem}.brand-sub{font-size:.45rem}.nav-cta{padding:10px 15px}.club-nav{font-size:.62rem}.hero-film{height:360px}.club-hero-copy{padding:30px 20px}.club-hero h1{font-size:2.25rem}.hero-bottom{font-size:.85rem}.club-details strong{font-size:.9rem}.tribe{min-height:290px}.experience-grid article{min-height:360px}.section-heading h2{font-size:1.8rem}}
+/* Keep the opening film free of competing photographs. */
+.hero-film .hero-image{display:none}
+.hero-film{background:#161616}
+.hero-film:before{display:none}
+.hero-film .hero-video{background:#161616}
+/* Edge-to-edge opening film. */
+.hero-film{height:calc(100svh - 92px);min-height:480px;max-height:none;width:100%}
+.hero-film .hero-video{object-fit:cover;object-position:center;width:100%;height:100%}
+@media(max-width:900px){.hero-film{height:calc(100svh - 130px);min-height:420px}}
+@media(max-width:600px){.hero-film{height:calc(100svh - 115px);min-height:400px}}
+/* Continuous background playback without visible pause controls. */
+#video-pause,#video-position{display:none}
+.hero-video-controls button[hidden]{display:none}
+.hero-film .hero-video{filter:none;image-rendering:auto}
+/* A frosted navigation bar when the page scrolls underneath. */
+body:not(.is-registering) .header{position:sticky;top:0;z-index:50;transition:background .25s,box-shadow .25s;backdrop-filter:none}
+body:not(.is-registering) .header.is-scrolled{background:rgba(24,28,34,.64);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 1px 0 rgba(255,255,255,.16)}
+@media(prefers-reduced-motion:reduce){body:not(.is-registering) .header{transition:none}}
+/* Bring the event and booking information into view sooner. */
+.hero-film{height:clamp(320px,53svh,550px);min-height:0}
+.club-hero-copy{padding:25px 24px}.club-hero h1{font-size:clamp(2rem,3.3vw,3.4rem);margin-bottom:12px}.club-hero .eyebrow{margin-bottom:10px}.hero-booking-facts{font-size:.95rem;line-height:1.65;margin:0 0 15px;color:#333}.hero-booking-facts strong{font-size:1.15rem}.hero-bottom{margin-top:12px;font-size:.85rem}
+@media(max-width:600px){.hero-film{height:39svh;min-height:245px}.club-hero-copy{padding:22px 18px}.club-hero h1{font-size:1.85rem}.hero-booking-facts{font-size:.8rem}.hero-booking-facts strong{font-size:1rem}.hero-bottom{font-size:.75rem}.club-nav{gap:18px}}
+.ticket-inclusions{max-width:600px;font-size:.85rem;line-height:1.5;color:#08787b;margin:-5px 0 17px}
+@media(max-width:600px){.ticket-inclusions{font-size:.75rem;max-width:300px}}
+/* Keep faces near the top of the composed shots visible in short hero panels. */
+.hero-film .hero-video{object-position:center top}
+
+/* Show the entire composed film instead of enlarging a shallow crop. */
+.hero-film{height:auto;aspect-ratio:16/9;min-height:0;max-height:none}
+.hero-film .hero-video{object-fit:contain;object-position:center}
+@media(max-width:600px){.hero-film{height:auto;min-height:0;aspect-ratio:9/16}}
+
+.hero-theme { color: #128b91; font-size: clamp(1.25rem, 3vw, 2rem); font-weight: 600; margin: .8rem 0 1.25rem; }
+
+.birthday-fields { border: 0; padding: 0; margin: 0 0 1.25rem; min-width: 0; }
+.birthday-fields legend { font-weight: 700; }
