@@ -1,7 +1,7 @@
 'use client';
 /* eslint-disable @next/next/no-img-element */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Confirmation } from '@/lib/booking';
 import type { PublicEvent } from '@/lib/event';
 import { daysInMonth, zodiacForBirthday } from '@/lib/zodiac';
@@ -14,6 +14,28 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 const PHONE_PATTERN = '[+0-9 ()\\-]{7,25}';
 const PHONE_TITLE = 'Enter a phone number with 7–25 characters, using numbers, spaces, +, brackets or hyphens.';
 
+// Unsent form answers, kept for this tab only so visiting the privacy page (or reloading) doesn't wipe them.
+const DRAFT_KEY = 'cc-registration-draft';
+function saveDraft(form: HTMLFormElement) {
+  const data = Object.fromEntries(new FormData(form));
+  delete data.termsAccepted; // consent must be given afresh
+  try {
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+  } catch {}
+}
+function readDraft(): Record<string, string> | null {
+  try {
+    return JSON.parse(sessionStorage.getItem(DRAFT_KEY) || 'null');
+  } catch {
+    return null;
+  }
+}
+function clearDraft() {
+  try {
+    sessionStorage.removeItem(DRAFT_KEY);
+  } catch {}
+}
+
 export function Registration({ event, hidden }: { event: PublicEvent; hidden: boolean }) {
   const c = event.content.registration;
   const { t, lines } = makeText(event.tokens);
@@ -24,6 +46,23 @@ export function Registration({ event, hidden }: { event: PublicEvent; hidden: bo
   const [busy, setBusy] = useState<false | string>(false);
   const [error, setError] = useState('');
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Restore unsent answers once on load; month, day and ticket are React state, the rest are plain inputs.
+  useEffect(() => {
+    const draft = readDraft();
+    const form = formRef.current;
+    if (!draft || !form) return;
+    for (const [name, value] of Object.entries(draft)) {
+      if (name === 'birthMonth' || name === 'birthDay' || name === 'ticketTypeId') continue;
+      const field = form.elements.namedItem(name);
+      if (field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement) field.value = value;
+    }
+    setMonth(draft.birthMonth ?? '');
+    setDay(draft.birthDay ?? '');
+    if (available.some((x) => x.id === draft.ticketTypeId)) setTicketId(draft.ticketTypeId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const ticket = event.tickets.find((x) => x.id === ticketId);
   const blocked = !event.bookingOpen ? 'Booking Opens Soon' : event.closed || !available.length ? 'Registration Closed' : null;
@@ -71,6 +110,7 @@ export function Registration({ event, hidden }: { event: PublicEvent; hidden: bo
 
       if (result.kind === 'confirmed') {
         form.reset();
+        clearDraft();
         setMonth('');
         setDay('');
         setConfirmation(result.confirmation);
@@ -86,6 +126,7 @@ export function Registration({ event, hidden }: { event: PublicEvent; hidden: bo
       setBusy('Confirming your payment…');
       const confirmed = await verifyPayment(result.reference);
       form.reset();
+      clearDraft();
       setMonth('');
       setDay('');
       setConfirmation(confirmed);
@@ -138,7 +179,16 @@ export function Registration({ event, hidden }: { event: PublicEvent; hidden: bo
         </h2>
         <p className="form-description">{t(c.formDescription)}</p>
 
-        <form id="attendee-form" onSubmit={onSubmit} onInput={() => setError('')} noValidate={false}>
+        <form
+          ref={formRef}
+          id="attendee-form"
+          onSubmit={onSubmit}
+          onInput={(e) => {
+            setError('');
+            saveDraft(e.currentTarget);
+          }}
+          noValidate={false}
+        >
           <div className="field">
             <label htmlFor="full-name">Full Name</label>
             <input

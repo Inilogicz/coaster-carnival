@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import type { Confirmation } from './booking';
+import { siteUrl } from './ticket';
 
 const escape = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
@@ -18,6 +19,8 @@ ${c.tribe ? `<div style="border-left:8px solid ${escape(c.tribe.colorHex)};backg
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e3eceb;font-size:14px">
 ${row('BOOKING REF', c.reference)}${row('TICKET', `${c.ticketName} · ${c.amountLabel}`)}${row('DATE', `${c.dateLong} · ${c.timeLabel}`)}${row('TAKE-OFF', c.takeOffPoint)}${row('DESTINATION', c.destination)}
 </table>
+<p style="margin:24px 0 0;text-align:center"><a href="${escape(siteUrl() + c.ticketUrl)}" style="display:inline-block;background:#4abbbd;color:#001f54;text-decoration:none;font-weight:800;font-size:13px;letter-spacing:.08em;padding:15px 26px;border-radius:6px">VIEW &amp; DOWNLOAD YOUR TICKET</a></p>
+<p style="margin:10px 0 0;text-align:center;color:#888;font-size:12px">Show the QR code on your ticket at take-off.</p>
 <p style="color:#444;font-size:13px;line-height:1.6;margin:22px 0 0">Questions? Call the organiser on ${escape(c.contactPhone)}. ${escape(c.refundPolicy)}</p>
 </td></tr>
 <tr><td style="padding:24px 28px;color:#888;font-size:11px;letter-spacing:.08em">${escape(c.hostUpper)} · ${escape(c.eventName.toUpperCase())}<br>See you at the coast.</td></tr>

@@ -68,7 +68,15 @@ export function ConfirmationModal({ confirmation, onClose }: { confirmation: Con
               <dd>{c.takeOffPoint}</dd>
             </div>
           </dl>
-          <button className="button primary" type="button" onClick={onClose}>
+          <div className="cc-modal-ticket">
+            <a className="button primary" href={c.ticketUrl} target="_blank" rel="noopener">
+              View my ticket
+            </a>
+            <a className="button cc-ticket-print" href={c.ticketImageUrl} download={`${c.reference}.png`}>
+              Download ticket
+            </a>
+          </div>
+          <button className="button cc-ticket-print" type="button" onClick={onClose}>
             Back to the invite
           </button>
         </div>

@@ -5,6 +5,7 @@ import { getAvailability, HOLD_MINUTES } from './event';
 import { formatEventDate, formatMoney } from './format';
 import { initializeTransaction, type PaystackTransaction } from './paystack';
 import { sendConfirmationEmail } from './email';
+import { ticketImagePath, ticketPath } from './ticket';
 import type { RegistrationInput } from './validation';
 import { zodiacForBirthday } from './zodiac';
 
@@ -208,6 +209,8 @@ export async function getConfirmation(registrationId: string) {
     destination: r.event.destination,
     contactPhone: r.event.contactPhone,
     refundPolicy: r.event.refundPolicy,
+    ticketUrl: ticketPath(r.reference),
+    ticketImageUrl: ticketImagePath(r.reference),
   };
 }
 
