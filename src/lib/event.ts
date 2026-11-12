@@ -89,6 +89,7 @@ export async function getPublicEvent(eventId?: string) {
 
   return {
     id: event.id,
+    currency: event.currency,
     name: event.name,
     host: event.host,
     theme: event.theme,

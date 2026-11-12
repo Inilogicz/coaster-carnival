@@ -11,7 +11,7 @@ export function validPrivateKey(expected: string | null, supplied: string) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-export async function submitExternalRegistration(eventId: string, key: string, input: RegistrationInput, paymentNote: string) {
+export async function submitExternalRegistration(eventId: string, key: string, input: RegistrationInput, paymentNote: string, receipt: { data: Uint8Array<ArrayBuffer>; mimeType: string; name: string }) {
   return db.$transaction(async (tx) => {
     // Same lock used by booking and approval; no places are reserved at submission.
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${eventId}))`;
@@ -29,6 +29,7 @@ export async function submitExternalRegistration(eventId: string, key: string, i
       birthMonth: input.birthMonth, birthDay: input.birthDay, zodiacSign: zodiac.sign, zodiacElement: zodiac.element,
       emergencyContact: input.emergencyContact, instagram: input.instagram || null,
       externalPaymentNote: paymentNote, holdExpiresAt: new Date(),
+      externalReceipt: { create: receipt },
     } });
   });
 }

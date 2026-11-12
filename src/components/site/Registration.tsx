@@ -6,6 +6,7 @@ import type { Confirmation } from '@/lib/booking';
 import type { PublicEvent } from '@/lib/event';
 import { daysInMonth } from '@/lib/zodiac';
 import { GENDERS } from '@/lib/validation';
+import { PaymentEvidence } from './PaymentEvidence';
 import { ConfirmationModal } from './ConfirmationModal';
 import { loadPaystack, payWithPaystack, verifyPayment } from './paystack-client';
 import { makeText } from './text';
@@ -18,6 +19,7 @@ const PHONE_TITLE = 'Enter a phone number with 7–25 characters, using numbers,
 const DRAFT_KEY = 'cc-registration-draft';
 function saveDraft(form: HTMLFormElement) {
   const data = Object.fromEntries(new FormData(form));
+  delete data.receipt;
   delete data.termsAccepted; // consent must be given afresh
   try {
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify(data));
@@ -129,10 +131,19 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
       if (String(payload.email).trim().toLowerCase() !== verification.email || !verification.token) {
         throw new Error('Please verify your email address using the code before continuing.');
       }
+      const submission = new FormData(form);
+      submission.set('emailVerificationToken', verification.token);
+      if (external) {
+        submission.set('eventId', event.id);
+        submission.set('key', external.key);
+        setBusy('Uploading receipt and submitting…');
+      }
       const response = await fetch(external ? '/api/external-registrations' : '/api/registrations', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...payload, emailVerificationToken: verification.token, ...(external ? { eventId: event.id, key: external.key } : {}) }),
+        ...(external ? { body: submission } : {
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...payload, emailVerificationToken: verification.token }),
+        }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'We couldn’t save your registration. Please try again.');
@@ -377,11 +388,7 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
             <input type="hidden" name="ticketTypeId" value={ticketId} />
           )}
 
-          {external && <div className="field">
-            <label htmlFor="external-payment-note">Payment details</label>
-            <textarea id="external-payment-note" name="paymentNote" required minLength={5} maxLength={1000} placeholder="Payer name, amount, date, payment method and transfer/reference number" />
-            <p className="field-hint">The organiser will check these details against the payment received.</p>
-          </div>}
+          {external && <PaymentEvidence currency={event.currency} />}
           <div className="preview-note">
             <strong>Before you book</strong>
             {ticket && (

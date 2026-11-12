@@ -10,7 +10,7 @@ export default async function ExternalPaymentsPage({ searchParams }: { searchPar
   await requireAdmin();
   const event = await resolveAdminEvent((await searchParams).event);
   if (!event) return <PageHeader title="External payments" subtitle="No event found." />;
-  const requests = await db.registration.findMany({ where: { eventId: event.id, externalPaymentNote: { not: null } }, include: { ticketType: true, tribe: true }, orderBy: { createdAt: 'desc' }, take: 200 });
+  const requests = await db.registration.findMany({ where: { eventId: event.id, externalPaymentNote: { not: null } }, include: { ticketType: true, tribe: true, externalReceipt: { select: { name: true } } }, orderBy: { createdAt: 'desc' }, take: 200 });
   const link = event.externalRegistrationKey ? `${siteUrl()}/external-registration/${event.id}?key=${event.externalRegistrationKey}` : null;
   return <>
     <PageHeader title="External payments" subtitle={`Private registration and approval · ${event.name}`} />
@@ -30,6 +30,7 @@ export default async function ExternalPaymentsPage({ searchParams }: { searchPar
         <div className="flex flex-wrap justify-between gap-3"><div><h2 className="font-bold">{r.fullName}</h2><p className="text-sm">{r.email} · {r.phone}</p></div><StatusBadge status={r.status} /></div>
         <p className="text-sm">{r.ticketType.name} · Expected {formatMoney(r.amount, event.currency)} · {formatDateTime(r.createdAt)}</p>
         <p className="whitespace-pre-wrap rounded bg-slate-50 p-3 text-sm">{r.externalPaymentNote}</p>
+        {r.externalReceipt ? <a className="btn-secondary inline-block" href={`/api/admin/receipts/${r.id}`}>Download receipt · {r.externalReceipt.name}</a> : <p className="text-sm text-amber-700">No receipt attached (earlier submission).</p>}
         <p className="text-xs text-slate-500">Booking reference: {r.reference}</p>
         {r.approvedBy && <p className="text-sm">Approved by {r.approvedBy} on {formatDateTime(r.approvedAt)} · Team: {r.tribe?.name ?? '—'} · Email: {r.emailSentAt ? 'sent' : 'not sent; resend from Attendees'}</p>}
         {r.status === 'AWAITING_APPROVAL' && <div className="flex gap-3">

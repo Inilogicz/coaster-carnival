@@ -97,6 +97,7 @@ model Registration {
   ticketType       TicketType         @relation(fields: [ticketTypeId], references: [id])
   status           RegistrationStatus @default(PENDING)
   amount           Int // kobo, copied from the ticket at booking time
+  externalReceipt ExternalPaymentReceipt?
   externalPaymentNote String?
   approvedBy String?
   approvedAt DateTime?
@@ -163,4 +164,12 @@ model EmailVerification {
   tokenHash String?
 
   @@index([ipHash, sentAt])
+}
+
+model ExternalPaymentReceipt {
+  registrationId String @id
+  registration Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  name String
+  mimeType String
+  data Bytes
 }

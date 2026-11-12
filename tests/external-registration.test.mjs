@@ -4,6 +4,7 @@ const nativeRequire = createRequire(import.meta.url);
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import ts from 'typescript';
+import { z } from 'zod';
 
 function load(file, dependencies) {
   const js = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true } }).outputText;
@@ -71,4 +72,23 @@ test('private links reject missing, wrong and replaced keys', () => {
   assert.equal(validPrivateKey('secret', ''), false);
   assert.equal(validPrivateKey('new-secret', 'old-secret'), false);
   assert.equal(validPrivateKey('secret', 'secret'), true);
+});
+
+
+test('receipt validator recognizes supported signatures and rejects disguised files', () => {
+  const { receiptType } = load('src/lib/payment-evidence.ts', { zod: { z } });
+  assert.equal(receiptType(Uint8Array.from([255, 216, 255, 0])), 'image/jpeg');
+  assert.equal(receiptType(Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10])), 'image/png');
+  assert.equal(receiptType(new TextEncoder().encode('%PDF-1.7')), 'application/pdf');
+  assert.equal(receiptType(new TextEncoder().encode('<svg><script>alert(1)</script></svg>')), null);
+  assert.equal(receiptType(new Uint8Array()), null);
+});
+
+test('payment evidence requires useful fields and valid amounts and dates', () => {
+  const { paymentEvidenceSchema } = load('src/lib/payment-evidence.ts', { zod: { z } });
+  const valid = { payerName: 'Test Guest', paidAmount: '5000.50', paymentDate: '2026-01-01', paymentMethod: 'Bank transfer', paymentReference: 'BANK-123' };
+  assert.equal(paymentEvidenceSchema.parse(valid).paidAmount, 5000.50);
+  for (const bad of [{ paidAmount: '0' }, { paidAmount: '1.001' }, { payerName: '' }, { paymentDate: '2026-02-30' }, { paymentDate: '2999-01-01' }, { paymentReference: '' }, { paymentMethod: 'unknown' }]) {
+    assert.equal(paymentEvidenceSchema.safeParse({ ...valid, ...bad }).success, false);
+  }
 });
