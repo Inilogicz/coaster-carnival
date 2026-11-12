@@ -74,7 +74,7 @@ test('rejected request cannot be approved', async () => {
   assert.equal(f.emails(), 0);
 });
 test('private links reject missing, wrong and replaced keys', () => {
-  const { validPrivateKey } = load('src/lib/external-registration.ts', { './db': {}, './booking': {}, './zodiac': {} });
+  const { validPrivateKey } = load('src/lib/external-registration.ts', { './db': {}, './booking': {}, './zodiac': {}, './email': {} });
   assert.equal(validPrivateKey(null, 'abc'), false);
   assert.equal(validPrivateKey('secret', ''), false);
   assert.equal(validPrivateKey('new-secret', 'old-secret'), false);
@@ -98,4 +98,49 @@ test('payment evidence requires useful fields and valid amounts and dates', () =
   for (const bad of [{ paidAmount: '0' }, { paidAmount: '1.001' }, { payerName: '' }, { paymentDate: '2026-02-30' }, { paymentDate: '2999-01-01' }, { paymentReference: '' }, { paymentMethod: 'unknown' }]) {
     assert.equal(paymentEvidenceSchema.safeParse({ ...valid, ...bad }).success, false);
   }
+});
+
+test('external submission acknowledges after commit and remains saved if mail fails', async () => {
+  for (const delivered of [true, false]) {
+    let committed = false;
+    let saved = false;
+    let sent = false;
+    const tx = {
+      $queryRaw: async () => [],
+      event: { findUnique: async () => ({ isActive: true, externalRegistrationKey: 'private-key', name: 'Coastal Carnival', contactPhone: '+2341234567' }) },
+      ticketType: { findFirst: async () => ({ id: 'ticket', price: 5000, name: 'Standard' }) },
+      registration: {
+        findUnique: async () => null,
+        create: async ({ data }) => { saved = true; assert.equal(data.status, 'AWAITING_APPROVAL'); return data; },
+      },
+    };
+    const { submitExternalRegistration } = load('src/lib/external-registration.ts', {
+      './db': { db: { $transaction: async (fn) => { const result = await fn(tx); committed = true; return result; } } },
+      './booking': { BookingError: Error },
+      './zodiac': { zodiacForBirthday: () => ({ sign: 'Aries', element: 'Fire' }) },
+      './email': { sendPendingRegistrationEmail: async (input) => {
+        assert.equal(committed, true);
+        assert.equal(input.email, 'guest@example.com');
+        assert.equal(input.firstName, 'Test');
+        assert.equal(input.eventName, 'Coastal Carnival');
+        sent = true;
+        return delivered;
+      } },
+    });
+    const result = await submitExternalRegistration('event', 'private-key', { email: 'guest@example.com', fullName: 'Test Guest', birthMonth: 4, birthDay: 1 }, 'Transfer REF1', { data: new Uint8Array(), name: 'receipt.pdf', mimeType: 'application/pdf' });
+    assert.equal(saved, true);
+    assert.equal(sent, true);
+    assert.equal(result.acknowledgmentSent, delivered);
+    assert.match(result.reference, /^CC-/);
+  }
+});
+
+test('pending email includes status and escapes guest content', () => {
+  const { pendingRegistrationEmailHtml } = load('src/lib/email-templates.ts', {});
+  const html = pendingRegistrationEmailHtml({ firstName: '<script>test</script>', email: 'guest@example.com', reference: 'CC-123', eventName: 'Coastal Carnival', ticketName: 'Standard', contactPhone: '+2341234567' });
+  assert.match(html, /AWAITING ORGANISER APPROVAL/);
+  assert.match(html, /CC-123/);
+  assert.match(html, /&lt;script&gt;/);
+  assert.doesNotMatch(html, /<script>/);
+  assert.match(html, /not a ticket or payment approval/);
 });

@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 import type { Confirmation } from './booking';
-import { confirmationEmailHtml } from './email-templates';
+import { confirmationEmailHtml, pendingRegistrationEmailHtml, type PendingRegistrationEmail } from './email-templates';
 import { siteUrl } from './ticket';
 
 export async function sendConfirmationEmail(c: Confirmation) {
@@ -22,4 +22,26 @@ export async function sendConfirmationEmail(c: Confirmation) {
     return false;
   }
   return true;
+}
+
+
+export async function sendPendingRegistrationEmail(c: PendingRegistrationEmail) {
+  if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) return false;
+  try {
+    const { error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
+      from: process.env.EMAIL_FROM,
+      to: c.email,
+      subject: `Registration received · Awaiting approval · ${c.reference}`,
+      html: pendingRegistrationEmailHtml(c),
+      text: `We’ve got you, ${c.firstName}.\n\nYour registration and payment receipt for ${c.eventName} have been received.\nStatus: Awaiting organiser approval\nBooking reference: ${c.reference}\nTicket type: ${c.ticketName}\n\nThe organiser will review your payment. Once approved, we will assign your team and send your ticket in a separate email. Your place and team are confirmed only after approval.\n\nNo need to submit again or make another payment on the registration page.\nQuestions or corrections? Contact ${c.contactPhone} and quote ${c.reference}.\n\nThis email is an acknowledgment, not a ticket or payment approval.`,
+    }, { idempotencyKey: `external-submission/${c.reference}` });
+    if (error) {
+      console.error('[email] pending acknowledgment failed', error);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('[email] pending acknowledgment failed', error);
+    return false;
+  }
 }

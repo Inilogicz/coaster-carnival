@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 
-export function SubmissionSuccess({ firstName, email, reference, eventName, ticketName, contactPhone }: {
-  firstName: string; email: string; reference?: string; eventName: string; ticketName?: string; contactPhone: string;
+export function SubmissionSuccess({ firstName, email, reference, eventName, ticketName, contactPhone, acknowledgmentSent }: {
+  firstName: string; email: string; reference?: string; eventName: string; ticketName?: string; contactPhone: string; acknowledgmentSent?: boolean;
 }) {
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
@@ -34,7 +34,7 @@ export function SubmissionSuccess({ firstName, email, reference, eventName, tick
         </ol>
         <div className="submission-inbox">
           <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" strokeWidth="1.6"/><path d="m4 7 8 6 8-6" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/></svg>
-          <div><strong>Keep an eye on your inbox</strong><p>{email}</p><small>Check your spam folder too. Your ticket will arrive after approval.</small></div>
+          <div><strong>Keep an eye on your inbox</strong><p>{email}</p><small>{acknowledgmentSent === false ? 'We couldn’t send your acknowledgment email. Your submission is saved—keep your booking reference. Your ticket will be emailed after approval.' : 'We’ve sent a submission acknowledgment. Check your spam folder too. Your ticket will arrive in a separate email after approval.'}</small></div>
         </div>
         <p className="submission-note">This confirms your submission. Your place and team are confirmed after approval. No further payment is needed on this page.</p>
         <a className="submission-home" href="/">Back to the carnival <span aria-hidden="true">↗</span></a>

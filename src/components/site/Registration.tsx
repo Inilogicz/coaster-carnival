@@ -53,7 +53,7 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
   const [codeSentTo, setCodeSentTo] = useState('');
   const [verificationBusy, setVerificationBusy] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState('');
-  const [submitted, setSubmitted] = useState<{ firstName: string; email: string; reference?: string } | null>(null);
+  const [submitted, setSubmitted] = useState<{ firstName: string; email: string; reference?: string; acknowledgmentSent?: boolean } | null>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -151,7 +151,7 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
 
       if (result.kind === 'approval') {
         clearDraft();
-        setSubmitted({ firstName: String(payload.fullName).trim().split(/\s+/)[0], email: verification.email, reference: result.reference });
+        setSubmitted({ firstName: String(payload.fullName).trim().split(/\s+/)[0], email: verification.email, reference: result.reference, acknowledgmentSent: result.acknowledgmentSent });
         return;
       }
 

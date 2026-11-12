@@ -47,3 +47,25 @@ ${c.tribe ? `<table role="presentation" width="100%" cellspacing="0" cellpadding
 <p style="margin:12px 0 0;text-align:center;font-size:12px;line-height:1.6;color:#5c7776">Save your ticket and show its QR code at take-off.<br>Keep this email so you can find it again.</p>
 <p style="margin:22px 0 0;font-size:12px;line-height:1.7;color:#5c7776">Button not opening? Copy this private ticket link into your browser:<br><a href="${e(ticketUrl)}" style="color:#087f83;word-break:break-all">${e(ticketUrl)}</a></p>`, `Questions? Contact the organiser on ${e(c.contactPhone)}.<br>${e(c.refundPolicy)}<br><br>See you at the coast.`);
 }
+
+export type PendingRegistrationEmail = {
+  firstName: string; email: string; reference: string; eventName: string; ticketName: string; contactPhone: string;
+};
+
+export function pendingRegistrationEmailHtml(c: PendingRegistrationEmail) {
+  const e = escapeHtml;
+  return frame(`We’ve received your registration for ${c.eventName}. It is awaiting organiser approval.`, `
+<p style="margin:0 0 12px;color:#087f83;font-size:11px;font-weight:700;letter-spacing:2px">SUBMISSION RECEIVED</p>
+<h1 style="margin:0 0 14px;font-size:30px;line-height:1.15;color:#073e59;letter-spacing:-1px">We’ve got you, ${e(c.firstName)}.</h1>
+<p style="margin:0 0 22px;font-size:15px;line-height:1.7;color:#4d666b">Your registration and payment receipt for <strong>${e(c.eventName)}</strong> have been received.</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td style="padding:20px;background:#fff8e7;border:1px solid #eee0b3;border-radius:10px">
+<p style="margin:0 0 10px;color:#8a6215;font-size:11px;font-weight:700;letter-spacing:1px">AWAITING ORGANISER APPROVAL</p>
+<p style="margin:0;font-size:14px;line-height:1.7;color:#675b39">The organiser will check your payment. Your place and team are confirmed only after approval.</p>
+</td></tr></table>
+<p style="margin:24px 0 7px;font-size:10px;letter-spacing:2px;color:#5c7776;font-weight:700">YOUR BOOKING REFERENCE</p>
+<p style="margin:0;font-family:'Courier New',monospace;font-size:19px;font-weight:700;color:#073e59;overflow-wrap:anywhere">${e(c.reference)}</p>
+<p style="margin:8px 0 24px;font-size:13px;color:#5c7776">${e(c.ticketName)}</p>
+<h2 style="margin:0 0 10px;font-size:17px;color:#073e59">What happens next?</h2>
+<p style="margin:0;font-size:14px;line-height:1.8;color:#4d666b">1. The organiser reviews your payment evidence.<br>2. Once approved, we assign your team.<br>3. Your ticket and team details arrive in a separate email.</p>
+<p style="margin:22px 0 0;font-size:14px;line-height:1.7;color:#4d666b">Keep this email for your reference. You don’t need to submit again or make another payment on the registration page.</p>`, `Need to correct your details or ask about your application? Contact the organiser on ${e(c.contactPhone)} and quote ${e(c.reference)}.<br><br>This email acknowledges your submission. It is not a ticket or payment approval.`);
+}
