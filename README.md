@@ -74,3 +74,5 @@ External registration now requires structured payer/payment details and a JPG, P
 ### Payment sources
 
 Apply the payment sources migration before deploying this version. Admin → Payments includes website Paystack transactions and approved external payments, with source labels and a source filter. Approving an external request creates its successful payment record in the same transaction as assigning the team. Pending/rejected requests are excluded. The migration backfills previously approved external registrations. External records use the registered ticket amount and the approval timestamp; they have no Paystack transaction ID. Existing status cards show totals across both sources.
+
+External registration is shared through `/external-registration`, with no key in the URL. It is omitted from public navigation and marked noindex. Anyone who knows the URL can access it while enabled for the active event; admin approval and email verification remain required. Admin can enable or disable access. Previously shared keyed links remain compatible. No database migration is required.

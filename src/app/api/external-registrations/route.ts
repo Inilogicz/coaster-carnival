@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const body = Object.fromEntries(form);
     const input = registrationSchema.parse(body);
     const { eventId, key, emailVerificationToken } = z.object({
-      eventId: z.string().min(1), key: z.string().min(32).max(128),
+      eventId: z.string().min(1), key: z.string().regex(/^[A-Za-z0-9_-]{22,128}$/),
       emailVerificationToken: z.string().min(1),
     }).parse(body);
     await requireVerifiedEmail(input.email, emailVerificationToken);

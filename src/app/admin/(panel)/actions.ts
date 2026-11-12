@@ -218,8 +218,8 @@ export async function changePassword(input: { current: string; next: string }) {
 /* ---------- Private external payments ---------- */
 export async function setExternalRegistrationLink(eventId: string, enabled: boolean) {
   return run(async () => {
-    await db.event.update({ where: { id: eventId }, data: { externalRegistrationKey: enabled ? crypto.randomBytes(32).toString('hex') : null } });
-    return enabled ? 'New private link created. Previous links no longer work.' : 'Private registration link disabled.';
+    await db.event.update({ where: { id: eventId }, data: { externalRegistrationKey: enabled ? crypto.randomBytes(16).toString('base64url') : null } });
+    return enabled ? 'External registration enabled.' : 'Private registration link disabled.';
   });
 }
 

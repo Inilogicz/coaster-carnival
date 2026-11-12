@@ -27,7 +27,7 @@ export default async function ExternalPaymentsPage({ searchParams }: { searchPar
     if (params.status) query.set('status', params.status);
     return `?${query}`;
   };
-  const link = event.externalRegistrationKey ? `${siteUrl()}/external-registration/${event.id}?key=${event.externalRegistrationKey}` : null;
+  const link = event.externalRegistrationKey ? `${siteUrl()}/external-registration` : null;
   return <>
     <PageHeader title="External payments" subtitle={`Private registration and approval · ${event.name}`} />
     <section className="card mb-5 space-y-3 p-5">
@@ -35,7 +35,7 @@ export default async function ExternalPaymentsPage({ searchParams }: { searchPar
       <p className="text-sm">Share only with guests who paid outside the site. Requests do not reserve places or issue tickets until approved. Check the actual payment before approving.</p>
       {link ? <input className="input w-full" aria-label="Private registration link" value={link} readOnly /> : <p>Private registration is disabled.</p>}
       <div className="flex flex-wrap gap-3">
-        <ActionButton action={setExternalRegistrationLink.bind(null, event.id, true)} confirm={link ? 'Replace this link? Previously shared links will stop working.' : undefined}>{link ? 'Replace link' : 'Create private link'}</ActionButton>
+        <ActionButton action={setExternalRegistrationLink.bind(null, event.id, true)} confirm={link ? 'Refresh registration access?' : undefined}>{link ? 'Refresh access' : 'Enable registration link'}</ActionButton>
         {link && <ActionButton action={setExternalRegistrationLink.bind(null, event.id, false)} confirm="Disable this private link? Existing requests remain available for review.">Disable link</ActionButton>}
       </div>
     </section>
