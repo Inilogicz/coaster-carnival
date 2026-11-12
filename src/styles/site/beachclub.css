@@ -46,7 +46,7 @@ body:not(.is-registering) .header.is-scrolled{background:rgba(24,28,34,.64);back
 .hero-film{height:clamp(320px,53svh,550px);min-height:0}
 .club-hero-copy{padding:25px 24px}.club-hero h1{font-size:clamp(2rem,3.3vw,3.4rem);margin-bottom:12px}.club-hero .eyebrow{margin-bottom:10px}.hero-booking-facts{font-size:.95rem;line-height:1.65;margin:0 0 15px;color:#333}.hero-booking-facts strong{font-size:1.15rem}.hero-bottom{margin-top:12px;font-size:.85rem}
 @media(max-width:600px){.hero-film{height:39svh;min-height:245px}.club-hero-copy{padding:22px 18px}.club-hero h1{font-size:1.85rem}.hero-booking-facts{font-size:.8rem}.hero-booking-facts strong{font-size:1rem}.hero-bottom{font-size:.75rem}.club-nav{gap:18px}}
-.ticket-inclusions{max-width:600px;font-size:.85rem;line-height:1.5;color:#08787b;margin:-5px 0 17px}
+.ticket-inclusions{max-width:600px;font-size:.85rem;line-height:1.5;color:#08787b;font-weight:600;margin:-5px 0 17px}
 @media(max-width:600px){.ticket-inclusions{font-size:.75rem;max-width:300px}}
 /* Keep faces near the top of the composed shots visible in short hero panels. */
 .hero-film .hero-video{object-position:center top}

@@ -104,7 +104,7 @@ export function Landing({ event, hidden }: { event: PublicEvent; hidden: boolean
             >
               <img src={tribe.image} alt={`${tribe.name} tribe`} loading="lazy" />
               <span>
-                {String(tribe.position + 1).padStart(2, '0')} / {tribe.element.toUpperCase()} · {tribe.colorName.toUpperCase()}
+                {String(tribe.position + 1).padStart(2, '0')} / {tribe.colorName.toUpperCase()}
               </span>
               <h3>{tribe.name.toUpperCase()}</h3>
               <p>{tribe.tagline}</p>

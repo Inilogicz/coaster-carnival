@@ -17,7 +17,7 @@ export default async function PrivacyPage() {
         Instagram handle to manage {event?.name ?? 'event'} registration and event planning.
       </p>
       <p>
-        Your birth month and day determine your zodiac element for tribe assignment. A full zodiac tribe is replaced with the
+        Your birth month and day are used to place you in a tribe. If a tribe is full, you join the
         least-filled available tribe. Your emergency contact is used to contact someone if you need help.
       </p>
       <p>

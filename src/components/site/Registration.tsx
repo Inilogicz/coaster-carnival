@@ -1,10 +1,10 @@
 'use client';
 /* eslint-disable @next/next/no-img-element */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Confirmation } from '@/lib/booking';
 import type { PublicEvent } from '@/lib/event';
-import { daysInMonth, zodiacForBirthday } from '@/lib/zodiac';
+import { daysInMonth } from '@/lib/zodiac';
 import { GENDERS } from '@/lib/validation';
 import { ConfirmationModal } from './ConfirmationModal';
 import { loadPaystack, payWithPaystack, verifyPayment } from './paystack-client';
@@ -71,17 +71,8 @@ export function Registration({ event, hidden }: { event: PublicEvent; hidden: bo
     : `All ${event.capacity} places are filled.`;
 
   const maxDay = month ? daysInMonth(Number(month)) : 31;
-  const zodiac = zodiacForBirthday(month, day);
-  const preferredTribe = zodiac && event.tribes.find((tribe) => tribe.position === zodiac.preferredPosition);
-  const tribeCapacity = event.tokens.tribeCapacity;
-
-  const birthdayHint = useMemo(
-    () =>
-      zodiac && preferredTribe
-        ? `${zodiac.sign} · ${zodiac.element} → ${preferredTribe.name}. If this tribe fills before your payment is confirmed, you’ll join the least-filled available tribe.`
-        : `If your zodiac tribe is full, you’ll join the least-filled available tribe. Each tribe has ${tribeCapacity} places.`,
-    [zodiac, preferredTribe, tribeCapacity],
-  );
+  // Tribes are assigned privately after payment, so the form never hints at how.
+  const birthdayHint = `Your tribe is revealed once your payment goes through. Each tribe has ${event.tokens.tribeCapacity} places.`;
 
   const closeModal = useCallback(() => {
     setConfirmation(null);
@@ -224,7 +215,7 @@ export function Registration({ event, hidden }: { event: PublicEvent; hidden: bo
 
           <fieldset className="birthday-fields">
             <legend>Birthday</legend>
-            <p className="field-hint">Month and day only. We use your zodiac element to choose your tribe; no birth year is collected.</p>
+            <p className="field-hint">Month and day only; no birth year is collected.</p>
             <div className="form-grid">
               <div className="field">
                 <label htmlFor="birth-month">Birth month</label>

@@ -15,7 +15,7 @@ function confirmationHtml(c: Confirmation) {
 <p style="margin:0;color:#159fa3;font-size:12px;letter-spacing:.16em;font-weight:700">YOU’RE IN!</p>
 <h1 style="margin:10px 0 6px;font-size:32px;letter-spacing:-.04em">Welcome to the coast, ${escape(c.firstName)}.</h1>
 <p style="margin:0 0 20px;color:#444;line-height:1.6">Your payment is confirmed and your place at ${escape(c.eventName)} is booked.</p>
-${c.tribe ? `<div style="border-left:8px solid ${escape(c.tribe.colorHex)};background:#f1f7f6;padding:16px 18px;border-radius:6px;margin-bottom:20px"><span style="font-size:12px;letter-spacing:.12em;color:#555">YOUR TRIBE</span><div style="font-size:28px;font-weight:900;margin-top:4px">${escape(c.tribe.name)} · ${escape(c.tribe.colorName)}</div><div style="color:#555;font-size:13px;margin-top:4px">${escape(c.zodiacSign)} · ${escape(c.zodiacElement)}${c.tribeReassigned ? ' · your zodiac tribe was full, so you’ve joined an available tribe' : ''}</div></div>` : ''}
+${c.tribe ? `<div style="border-left:8px solid ${escape(c.tribe.colorHex)};background:#f1f7f6;padding:16px 18px;border-radius:6px;margin-bottom:20px"><span style="font-size:12px;letter-spacing:.12em;color:#555">YOUR TRIBE</span><div style="font-size:28px;font-weight:900;margin-top:4px">${escape(c.tribe.name)} · ${escape(c.tribe.colorName)}</div></div>` : ''}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e3eceb;font-size:14px">
 ${row('BOOKING REF', c.reference)}${row('TICKET', `${c.ticketName} · ${c.amountLabel}`)}${row('DATE', `${c.dateLong} · ${c.timeLabel}`)}${row('TAKE-OFF', c.takeOffPoint)}${row('DESTINATION', c.destination)}
 </table>

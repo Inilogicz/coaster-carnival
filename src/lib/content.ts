@@ -101,7 +101,7 @@ export const defaultContent: EventContent = {
   tribes: {
     eyebrow: '4 TRIBES. ONE COAST. ONE CHAMPION.',
     title: 'MEET YOUR TRIBE',
-    intro: 'Your birthday’s zodiac element guides your tribe: {tribeMap}. Each tribe has {tribeCapacity} places. If your zodiac tribe fills, you’ll join the least-filled available tribe. Your final tribe is confirmed when your payment goes through.',
+    intro: 'Four tribes. One coast. Each tribe has {tribeCapacity} places, and you’ll find out which one you’ve joined once your payment goes through.',
   },
   gallery: {
     eyebrow: 'A TASTE OF THE MOOD',

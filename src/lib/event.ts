@@ -2,7 +2,6 @@ import type { Prisma } from '@prisma/client';
 import { db } from './db';
 import { resolveContent } from './content';
 import { formatEventDate, formatMoney } from './format';
-import { ELEMENTS } from './zodiac';
 
 /** A pending registration holds its place this long while the guest pays. */
 export const HOLD_MINUTES = 30;
@@ -86,7 +85,6 @@ export async function getPublicEvent() {
     contact: event.contactPhone,
     takeOff: event.takeOffPoint,
     destination: event.destination,
-    tribeMap: event.tribes.map((t) => `${ELEMENTS[t.position]} → ${t.name}`).join(', '),
   };
 
   return {
@@ -108,7 +106,7 @@ export async function getPublicEvent() {
     closed,
     priceLabel,
     tickets,
-    tribes: event.tribes.map((t) => ({ position: t.position, element: t.element, name: t.name, colorName: t.colorName, colorHex: t.colorHex, tagline: t.tagline, image: t.image, capacity: t.capacity })),
+    tribes: event.tribes.map((t) => ({ position: t.position, name: t.name, colorName: t.colorName, colorHex: t.colorHex, tagline: t.tagline, image: t.image, capacity: t.capacity })),
     content,
     tokens,
   };

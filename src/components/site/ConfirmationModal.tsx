@@ -40,10 +40,6 @@ export function ConfirmationModal({ confirmation, onClose }: { confirmation: Con
               <strong>
                 {c.tribe.name} · {c.tribe.colorName}
               </strong>
-              <small>
-                {c.zodiacSign} · {c.zodiacElement}
-                {c.tribeReassigned && ' · Your zodiac tribe was full, so you’ve joined an available tribe.'}
-              </small>
             </div>
           )}
           <dl className="cc-facts">

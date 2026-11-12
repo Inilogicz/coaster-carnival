@@ -39,9 +39,6 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
               <strong>
                 {c.tribe.name} · {c.tribe.colorName}
               </strong>
-              <small>
-                {c.zodiacSign} · {c.zodiacElement}
-              </small>
             </div>
           )}
           <dl className="cc-facts">
