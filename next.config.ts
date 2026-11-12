@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Covers unmatched URLs across the separate site and admin root layouts.
+  experimental: { globalNotFound: true },
 };
 
 export default nextConfig;
