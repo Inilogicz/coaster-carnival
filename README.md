@@ -70,3 +70,7 @@ Run `node --test tests/external-registration.test.mjs` for focused approval and 
 ### External payment receipts
 
 External registration now requires structured payer/payment details and a JPG, PNG or PDF receipt (maximum 2 MB). Apply the payment receipt migration with `npm run db:deploy` before deploying this version. Receipt bytes are stored in a separate database table, so existing attendee queries do not load files. Guests see image previews, file size and remove/replace controls; files are not retained across refreshes and must be reselected. Admin → External payments provides authenticated receipt downloads; no public storage URL is generated. Existing requests without receipts remain reviewable. Payment evidence never automatically approves a booking.
+
+### Payment sources
+
+Apply the payment sources migration before deploying this version. Admin → Payments includes website Paystack transactions and approved external payments, with source labels and a source filter. Approving an external request creates its successful payment record in the same transaction as assigning the team. Pending/rejected requests are excluded. The migration backfills previously approved external registrations. External records use the registered ticket amount and the approval timestamp; they have no Paystack transaction ID. Existing status cards show totals across both sources.

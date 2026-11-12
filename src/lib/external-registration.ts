@@ -22,7 +22,7 @@ export async function submitExternalRegistration(eventId: string, key: string, i
     const existing = await tx.registration.findUnique({ where: { eventId_email: { eventId, email: input.email } } });
     if (existing) throw new BookingError('This email already has a registration or approval request. Contact the organiser for help.', 409);
     const zodiac = zodiacForBirthday(input.birthMonth, input.birthDay)!;
-    await tx.registration.create({ data: {
+    const registration = await tx.registration.create({ data: {
       eventId, ticketTypeId: ticket.id, reference: `CC-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,
       status: 'AWAITING_APPROVAL', amount: ticket.price, email: input.email,
       fullName: input.fullName, phone: input.phone, gender: input.gender,
@@ -31,5 +31,6 @@ export async function submitExternalRegistration(eventId: string, key: string, i
       externalPaymentNote: paymentNote, holdExpiresAt: new Date(),
       externalReceipt: { create: receipt },
     } });
+    return { reference: registration.reference };
   });
 }

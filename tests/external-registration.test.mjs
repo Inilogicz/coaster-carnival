@@ -21,7 +21,8 @@ function bookingFixture({ status = 'AWAITING_APPROVAL', taken = 0, fullTeam = fa
   const tribe = { id: 'team', position: 0, capacity: fullTeam ? 0 : 10, name: 'Hot' };
   const record = { id: 'guest', eventId: 'event', ticketTypeId: 'ticket', status, externalPaymentNote: 'Bank transfer REF1', amount: 5000, fullName: 'Test Guest', reference: 'CC-TEST', event: { tribes: [tribe], capacity: 10, host: 'Test host' }, tribe: null, ticketType: { name: 'Standard' } };
   let emails = 0;
-  const tx = { $queryRaw: async () => [], registration: {
+  const payments = [];
+  const tx = { payment: { upsert: async ({ create }) => { payments.push(create); } }, $queryRaw: async () => [], registration: {
     findUniqueOrThrow: async () => record,
     update: async ({ data }) => { Object.assign(record, data); record.tribe = tribe; return record; },
   }, ticketType: { findUniqueOrThrow: async () => ({ quantity: 10 }) } };
@@ -36,7 +37,7 @@ function bookingFixture({ status = 'AWAITING_APPROVAL', taken = 0, fullTeam = fa
     './ticket': { ticketPath: () => '/ticket/test', ticketImagePath: () => '/ticket/test/image' },
     './zodiac': { zodiacForBirthday: () => ({ preferredPosition: 0 }) },
   });
-  return { booking, record, emails: () => emails };
+  return { booking, record, payments, emails: () => emails };
 }
 
 test('external request cannot be confirmed without admin approval', async () => {
@@ -51,7 +52,13 @@ test('approval assigns team and records reviewer before sending ticket', async (
   assert.equal(f.record.status, 'PAID');
   assert.equal(f.record.tribeId, 'team');
   assert.equal(f.record.approvedBy, 'admin@example.com');
-  assert.equal(f.emails(), 1);
+  assert.equal(f.payments.length, 1);
+  assert.equal(f.payments[0].source, 'EXTERNAL');
+  assert.equal(f.payments[0].status, 'SUCCESS');
+  assert.equal(f.payments[0].reference, 'EXT-CC-TEST');
+  await f.booking.confirmRegistration('guest', new Date(), 'admin@example.com');
+  assert.equal(f.payments.length, 1);
+  assert.equal(f.emails(), 2);
 });
 test('approval rejects full event and full teams without issuing tickets', async () => {
   for (const options of [{ taken: 10 }, { fullTeam: true }]) {

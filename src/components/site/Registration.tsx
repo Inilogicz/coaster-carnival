@@ -6,6 +6,7 @@ import type { Confirmation } from '@/lib/booking';
 import type { PublicEvent } from '@/lib/event';
 import { daysInMonth } from '@/lib/zodiac';
 import { GENDERS } from '@/lib/validation';
+import { SubmissionSuccess } from './SubmissionSuccess';
 import { PaymentEvidence } from './PaymentEvidence';
 import { ConfirmationModal } from './ConfirmationModal';
 import { loadPaystack, payWithPaystack, verifyPayment } from './paystack-client';
@@ -52,7 +53,7 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
   const [codeSentTo, setCodeSentTo] = useState('');
   const [verificationBusy, setVerificationBusy] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState<{ firstName: string; email: string; reference?: string } | null>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -150,7 +151,7 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
 
       if (result.kind === 'approval') {
         clearDraft();
-        setSubmitted(true);
+        setSubmitted({ firstName: String(payload.fullName).trim().split(/\s+/)[0], email: verification.email, reference: result.reference });
         return;
       }
 
@@ -183,11 +184,7 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
     }
   }
 
-  if (submitted) return <main className="plain-page">
-    <h1>Registration submitted</h1>
-    <p>Your external payment is awaiting organiser approval. Once approved, we’ll assign your team and email your ticket. No further payment is needed here.</p>
-    <p>If you need to correct your details, contact the organiser on <a href={`tel:${event.contactPhone.replace(/\s/g, '')}`}>{event.contactPhone}</a>.</p>
-  </main>;
+  if (submitted) return <SubmissionSuccess {...submitted} eventName={event.name} ticketName={ticket?.name} contactPhone={event.contactPhone} />;
 
   return (
     <section id="register" className="screen registration" aria-labelledby="registration-title" hidden={hidden}>

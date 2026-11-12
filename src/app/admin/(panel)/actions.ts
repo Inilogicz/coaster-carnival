@@ -182,7 +182,7 @@ export async function resendEmail(registrationId: string) {
 /** Re-check the latest Paystack attempt for a pending registration (e.g. if a webhook was missed). */
 export async function recheckPayment(registrationId: string) {
   return run(async () => {
-    const payments = await db.payment.findMany({ where: { registrationId }, orderBy: { createdAt: 'desc' }, take: 5 });
+    const payments = await db.payment.findMany({ where: { registrationId, source: 'WEBSITE' }, orderBy: { createdAt: 'desc' }, take: 5 });
     if (!payments.length) throw new Error('No payment attempts found for this guest.');
     for (const p of payments) {
       const trx = await verifyTransaction(p.reference).catch(() => null);

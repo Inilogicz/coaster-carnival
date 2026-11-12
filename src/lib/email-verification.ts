@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { verificationEmailHtml } from './email-templates';
 import { Resend } from 'resend';
 import { db } from './db';
 import { BookingError } from './booking';
@@ -35,7 +36,8 @@ export async function sendVerificationCode(email: string, ip: string) {
     from: process.env.EMAIL_FROM,
     to: email,
     subject: 'Your Coastal Carnival email verification code',
-    text: `Your verification code is ${code}. It expires in 10 minutes. Enter it on the booking form to verify your email before payment. If you did not request this code, ignore this email.`,
+    html: verificationEmailHtml(code),
+    text: `Your verification code is ${code}. It expires in 10 minutes. Enter it on the booking form to verify your email before submitting your registration. If you did not request this code, ignore this email.`,
   });
   if (error) throw new BookingError('We couldn’t send your code. Check the email address and try again in one minute.', 502);
 }

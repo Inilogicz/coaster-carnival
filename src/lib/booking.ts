@@ -190,6 +190,17 @@ export async function confirmRegistration(registrationId: string, paidAt: Date |
         overCapacity: paid >= current.event.capacity,
       },
     });
+    if (externalAdmin) {
+      await tx.payment.upsert({
+        where: { reference: `EXT-${current.reference}` },
+        create: {
+          registrationId, reference: `EXT-${current.reference}`, source: 'EXTERNAL',
+          amount: current.amount, currency: current.event.currency, status: 'SUCCESS',
+          paidAt: paidAt ?? new Date(), gatewayMessage: 'External payment approved by organiser',
+        },
+        update: {},
+      });
+    }
   });
 
   const confirmation = await getConfirmation(registrationId);

@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     const mimeType = receiptType(data);
     if (!mimeType || mimeType !== file.type) throw new BookingError('Upload a JPG, PNG or PDF receipt.');
     const paymentNote = `Payer: ${evidence.payerName}\nAmount paid: ${evidence.paidAmount.toFixed(2)}\nDate: ${evidence.paymentDate}\nMethod: ${evidence.paymentMethod}\nReference: ${evidence.paymentReference}${evidence.paymentNote ? `\nNotes: ${evidence.paymentNote}` : ''}`;
-    await submitExternalRegistration(eventId, key, input, paymentNote, { data, mimeType, name: file.name.replace(/[^a-zA-Z0-9._ -]/g, '_').slice(0, 150) || 'receipt' });
-    return NextResponse.json({ kind: 'approval' });
+    const registration = await submitExternalRegistration(eventId, key, input, paymentNote, { data, mimeType, name: file.name.replace(/[^a-zA-Z0-9._ -]/g, '_').slice(0, 150) || 'receipt' });
+    return NextResponse.json({ kind: 'approval', reference: registration.reference });
   } catch (error) { return handleError(error); }
 }

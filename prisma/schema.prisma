@@ -134,7 +134,13 @@ enum PaymentStatus {
   ABANDONED
 }
 
+enum PaymentSource {
+  WEBSITE
+  EXTERNAL
+}
+
 model Payment {
+  source         PaymentSource @default(WEBSITE)
   id             String        @id @default(cuid())
   registrationId String
   registration   Registration  @relation(fields: [registrationId], references: [id], onDelete: Cascade)
