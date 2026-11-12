@@ -144,3 +144,15 @@ test('pending email includes status and escapes guest content', () => {
   assert.doesNotMatch(html, /<script>/);
   assert.match(html, /not a ticket or payment approval/);
 });
+
+test('pagination bounds invalid pages and computes database limits', () => {
+  const { paginate } = load('src/lib/pagination.ts', {});
+  for (const input of [undefined, '', 'NaN', '-3', '1.2', 'Infinity', '9007199254740992']) {
+    assert.equal(paginate(input, 100).page, 1);
+  }
+  assert.deepEqual(paginate('3', 76), { page: 3, pages: 4, skip: 50, take: 25, total: 76 });
+  assert.deepEqual(paginate('999', 26), { page: 2, pages: 2, skip: 25, take: 25, total: 26 });
+  assert.deepEqual(paginate('2', 0), { page: 1, pages: 1, skip: 0, take: 25, total: 0 });
+  assert.equal(paginate('2', 24, 12).skip, 12);
+  assert.equal(paginate('2', 50, 50).page, 1);
+});

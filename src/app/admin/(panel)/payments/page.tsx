@@ -1,3 +1,5 @@
+import { Pagination } from '@/components/admin/Pagination';
+import { paginate } from '@/lib/pagination';
 import Link from 'next/link';
 import type { PaymentStatus, Prisma } from '@prisma/client';
 import { PageHeader, StatusBadge } from '@/components/admin/ui';
@@ -13,7 +15,6 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
   const event = await resolveAdminEvent(params.event);
   if (!event) return <PageHeader title="Payments" subtitle="No event found." />;
 
-  const page = Math.max(1, Number(params.page) || 1);
   const where: Prisma.PaymentWhereInput = { registration: { eventId: event.id } };
   if (params.source === 'WEBSITE' || params.source === 'EXTERNAL') where.source = params.source;
   if (params.status && STATUSES.includes(params.status as PaymentStatus)) where.status = params.status as PaymentStatus;
@@ -26,19 +27,20 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
     ];
   }
 
-  const [rows, total, totals] = await Promise.all([
+  const total = await db.payment.count({ where });
+  const paging = paginate(params.page, total, PAGE_SIZE);
+  const { page } = paging;
+  const [rows, totals] = await Promise.all([
     db.payment.findMany({
       where,
       include: { registration: { select: { id: true, fullName: true, email: true, reference: true, approvedBy: true } } },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
-    db.payment.count({ where }),
     db.payment.groupBy({ by: ['status'], where: { registration: { eventId: event.id } }, _count: true, _sum: { amount: true } }),
   ]);
   const sum = (s: PaymentStatus) => totals.find((t) => t.status === s);
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const link = (o: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
     for (const [k, v] of Object.entries({ event: params.event, status: params.status, source: params.source, q: params.q, ...o })) if (v) p.set(k, v);
@@ -104,15 +106,8 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
         </table>
       </div>
 
-      {pages > 1 && (
-        <nav className="mt-4 flex items-center justify-between text-sm">
-          <span className="text-slate-500">Page {page} of {pages}</span>
-          <span className="flex gap-2">
-            {page > 1 && <Link className="btn-secondary" href={link({ page: String(page - 1) })}>Previous</Link>}
-            {page < pages && <Link className="btn-secondary" href={link({ page: String(page + 1) })}>Next</Link>}
-          </span>
-        </nav>
-      )}
+      <Pagination {...paging} pageSize={PAGE_SIZE} href={(page) => link({ page: String(page) })} />
+
     </>
   );
 }

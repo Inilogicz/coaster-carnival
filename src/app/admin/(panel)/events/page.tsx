@@ -1,3 +1,5 @@
+import { Pagination } from '@/components/admin/Pagination';
+import { paginate } from '@/lib/pagination';
 import Link from 'next/link';
 import { NewEventForm } from '@/components/admin/NewEventForm';
 import { ActionButton, PageHeader } from '@/components/admin/ui';
@@ -5,17 +7,20 @@ import { db } from '@/lib/db';
 import { formatEventDate, formatMoney } from '@/lib/format';
 import { activateEvent, deleteEvent } from '../actions';
 
-export default async function EventsPage() {
+export default async function EventsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+  const params = await searchParams;
+  const paging = paginate(params.page, await db.event.count(), 12);
   const events = await db.event.findMany({
-    orderBy: [{ isActive: 'desc' }, { date: 'desc' }],
+    orderBy: [{ isActive: 'desc' }, { date: 'desc' }, { id: 'desc' }],
+    skip: paging.skip, take: paging.take,
     include: { _count: { select: { registrations: { where: { status: 'PAID' } } } } },
   });
-  const revenue = await db.registration.groupBy({ by: ['eventId'], where: { status: 'PAID' }, _sum: { amount: true } });
+  const revenue = await db.registration.groupBy({ by: ['eventId'], where: { status: 'PAID', eventId: { in: events.map((e) => e.id) } }, _sum: { amount: true } });
 
   return (
     <>
       <PageHeader title="All events" subtitle="Only one event is live on the website at a time. Past events keep their attendees and payments." />
-      <NewEventForm events={events.map((e) => ({ id: e.id, name: e.name }))} />
+      <NewEventForm events={await db.event.findMany({ select: { id: true, name: true }, orderBy: [{ isActive: 'desc' }, { date: 'desc' }] })} />
       <div className="grid gap-4 md:grid-cols-2">
         {events.map((e) => (
           <article key={e.id} className={`card p-5 ${e.isActive ? 'border-brand ring-2 ring-brand/20' : ''}`}>
@@ -48,6 +53,7 @@ export default async function EventsPage() {
           </article>
         ))}
       </div>
+      <Pagination {...paging} pageSize={paging.take} href={(page) => `?page=${page}`} />
     </>
   );
 }

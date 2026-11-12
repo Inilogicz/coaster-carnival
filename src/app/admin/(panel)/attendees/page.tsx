@@ -1,3 +1,5 @@
+import { Pagination } from '@/components/admin/Pagination';
+import { paginate } from '@/lib/pagination';
 import Link from 'next/link';
 import { ActionButton, PageHeader, StatusBadge } from '@/components/admin/ui';
 import { attendeeWhere, resolveAdminEvent, type AttendeeFilters } from '@/lib/admin-queries';
@@ -13,17 +15,18 @@ export default async function AttendeesPage({ searchParams }: { searchParams: Pr
   const event = await resolveAdminEvent(params.event);
   if (!event) return <PageHeader title="Attendees" subtitle="No event found." />;
 
-  const page = Math.max(1, Number(params.page) || 1);
   const where = attendeeWhere(event.id, params);
-  const [rows, total] = await Promise.all([
+  const total = await db.registration.count({ where });
+  const paging = paginate(params.page, total, PAGE_SIZE);
+  const { page } = paging;
+  const [rows] = await Promise.all([
     db.registration.findMany({
       where,
       include: { tribe: true, ticketType: true, payments: { orderBy: { createdAt: 'desc' }, take: 3 } },
-      orderBy: [{ paidAt: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }],
+      orderBy: [{ paidAt: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }, { id: 'desc' }],
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
-    db.registration.count({ where }),
   ]);
 
   const qs = (overrides: Record<string, string | undefined>) => {
@@ -33,7 +36,6 @@ export default async function AttendeesPage({ searchParams }: { searchParams: Pr
     return `?${p.toString()}`;
   };
   const now = new Date();
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <>
@@ -150,15 +152,8 @@ export default async function AttendeesPage({ searchParams }: { searchParams: Pr
         </table>
       </div>
 
-      {pages > 1 && (
-        <nav className="mt-4 flex items-center justify-between text-sm">
-          <span className="text-slate-500">Page {page} of {pages}</span>
-          <span className="flex gap-2">
-            {page > 1 && <Link className="btn-secondary" href={qs({ page: String(page - 1) })}>Previous</Link>}
-            {page < pages && <Link className="btn-secondary" href={qs({ page: String(page + 1) })}>Next</Link>}
-          </span>
-        </nav>
-      )}
+      <Pagination {...paging} pageSize={PAGE_SIZE} href={(page) => qs({ page: String(page) })} />
+
     </>
   );
 }
