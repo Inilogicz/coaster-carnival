@@ -237,7 +237,7 @@ export async function rejectExternalRegistration(registrationId: string) {
   return run(async () => {
     const reg = await db.registration.findUniqueOrThrow({ where: { id: registrationId } });
     await db.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${reg.eventId}))`;
+      await tx.$queryRaw`SELECT 1 AS locked FROM (SELECT pg_advisory_xact_lock(hashtext(${reg.eventId}))) AS lock`;
       const result = await tx.registration.updateMany({ where: { id: registrationId, status: 'AWAITING_APPROVAL' }, data: { status: 'CANCELLED' } });
       if (!result.count) throw new Error('This request has already been reviewed.');
     });

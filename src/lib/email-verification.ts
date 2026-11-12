@@ -16,8 +16,8 @@ export async function sendVerificationCode(email: string, ip: string) {
   const code = crypto.randomInt(100000, 1000000).toString();
   const ipHash = hash(`ip:${ip}`);
   await db.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`verification-ip:${ipHash}`}))`;
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`verification:${email}`}))`;
+    await tx.$queryRaw`SELECT 1 AS locked FROM (SELECT pg_advisory_xact_lock(hashtext(${`verification-ip:${ipHash}`}))) AS lock`;
+    await tx.$queryRaw`SELECT 1 AS locked FROM (SELECT pg_advisory_xact_lock(hashtext(${`verification:${email}`}))) AS lock`;
     const previous = await tx.emailVerification.findUnique({ where: { email } });
     if (previous && Date.now() - previous.sentAt.getTime() < 60_000) {
       throw new BookingError('Please wait one minute before requesting another code.', 429);
@@ -44,7 +44,7 @@ export async function confirmVerificationCode(email: string, code: string) {
   // Commit failed attempts too, so parallel guesses cannot bypass the limit.
   const token = crypto.randomBytes(32).toString('base64url');
   const valid = await db.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`verification:${email}`}))`;
+    await tx.$queryRaw`SELECT 1 AS locked FROM (SELECT pg_advisory_xact_lock(hashtext(${`verification:${email}`}))) AS lock`;
     const record = await tx.emailVerification.findUnique({ where: { email } });
     if (!record || record.expiresAt <= new Date() || record.attempts >= 5 || record.tokenHash) return false;
     const matches = record.codeHash === hash(`${email}:${code}`);

@@ -14,7 +14,7 @@ export function validPrivateKey(expected: string | null, supplied: string) {
 export async function submitExternalRegistration(eventId: string, key: string, input: RegistrationInput, paymentNote: string, receipt: { data: Uint8Array<ArrayBuffer>; mimeType: string; name: string }) {
   return db.$transaction(async (tx) => {
     // Same lock used by booking and approval; no places are reserved at submission.
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${eventId}))`;
+    await tx.$queryRaw`SELECT 1 AS locked FROM (SELECT pg_advisory_xact_lock(hashtext(${eventId}))) AS lock`;
     const event = await tx.event.findUnique({ where: { id: eventId } });
     if (!event?.isActive || !validPrivateKey(event.externalRegistrationKey, key)) throw new BookingError('This private registration link is unavailable.', 404);
     const ticket = await tx.ticketType.findFirst({ where: { id: input.ticketTypeId, eventId, active: true } });
