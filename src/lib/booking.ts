@@ -43,6 +43,7 @@ export async function startBooking(input: RegistrationInput, appUrl: string): Pr
     if (!ticket) throw new BookingError('That ticket is no longer available. Please choose another.', 409);
 
     const existing = await tx.registration.findUnique({ where: { eventId_email: { eventId: event.id, email: input.email } } });
+    if (existing?.externalPaymentNote) throw new BookingError('This email has an external payment registration. Contact the organiser about its approval.', 409);
     if (existing?.status === 'PAID') throw new BookingError('This email already has a confirmed booking. Check your inbox for your confirmation.', 409);
 
     // Count places held by everyone else, so a guest retrying payment does not block themselves.
@@ -148,14 +149,25 @@ export async function applyPaystackTransaction(trx: PaystackTransaction): Promis
 }
 
 /** Mark a registration paid, assign its tribe, and send the confirmation email once. */
-async function confirmRegistration(registrationId: string, paidAt: Date | null) {
+export async function confirmRegistration(registrationId: string, paidAt: Date | null, externalAdmin?: string) {
   await db.$transaction(async (tx) => {
     const reg = await tx.registration.findUniqueOrThrow({ where: { id: registrationId } });
     await lockEvent(tx, reg.eventId);
     const current = await tx.registration.findUniqueOrThrow({ where: { id: registrationId }, include: { event: { include: { tribes: true } } } });
     if (current.status === 'PAID') return;
+    if (externalAdmin && (current.status !== 'AWAITING_APPROVAL' || !current.externalPaymentNote)) {
+      throw new BookingError('Only pending external payments can be approved.', 409);
+    }
+    if (!externalAdmin && current.status === 'AWAITING_APPROVAL') throw new BookingError('This booking needs admin approval.', 409);
 
     const { paid, tribeTaken } = await getAvailability(current.eventId, tx);
+    if (externalAdmin) {
+      const { taken, ticketTaken } = await getAvailability(current.eventId, tx);
+      const ticket = await tx.ticketType.findUniqueOrThrow({ where: { id: current.ticketTypeId } });
+      if (taken >= current.event.capacity || (ticket.quantity != null && (ticketTaken.get(ticket.id) ?? 0) >= ticket.quantity)) {
+        throw new BookingError('There are no available places for this ticket. Update capacity before approving.', 409);
+      }
+    }
     const tribes = current.event.tribes;
     const preferredPosition = zodiacForBirthday(current.birthMonth, current.birthDay)?.preferredPosition ?? 0;
     const preferred = tribes.find((t) => t.position === preferredPosition);
@@ -165,10 +177,13 @@ async function confirmRegistration(registrationId: string, paidAt: Date | null) 
       preferred && filled(preferred) < preferred.capacity ? preferred
       : byFill.find((t) => filled(t) < t.capacity) ?? byFill[0] ?? null;
 
+    if (externalAdmin && (!tribe || filled(tribe) >= tribe.capacity)) throw new BookingError('All teams are full. Update team capacity before approving.', 409);
+
     await tx.registration.update({
       where: { id: registrationId },
       data: {
         status: 'PAID',
+        ...(externalAdmin ? { approvedBy: externalAdmin, approvedAt: new Date() } : {}),
         paidAt: paidAt ?? new Date(),
         tribeId: tribe?.id ?? null,
         tribeReassigned: Boolean(tribe && preferred && tribe.id !== preferred.id),

@@ -64,6 +64,7 @@ export function ActionButton({
 
 export function StatusBadge({ status, holding }: { status: string; holding?: boolean }) {
   const map: Record<string, [string, string]> = {
+    AWAITING_APPROVAL: ['Awaiting approval', 'bg-amber-100 text-amber-800'],
     PAID: ['Paid', 'bg-emerald-100 text-emerald-800'],
     SUCCESS: ['Success', 'bg-emerald-100 text-emerald-800'],
     PENDING: holding ? ['Paying now', 'bg-amber-100 text-amber-800'] : ['Abandoned', 'bg-slate-100 text-slate-600'],

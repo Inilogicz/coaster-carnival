@@ -8,7 +8,7 @@ export function attendeeWhere(eventId: string, f: AttendeeFilters): Prisma.Regis
   const where: Prisma.RegistrationWhereInput = { eventId };
   if (f.status === 'HOLDING') Object.assign(where, { status: 'PENDING', holdExpiresAt: { gt: new Date() } });
   else if (f.status === 'EXPIRED') Object.assign(where, { status: 'PENDING', holdExpiresAt: { lte: new Date() } });
-  else if (f.status && ['PAID', 'PENDING', 'CANCELLED'].includes(f.status)) where.status = f.status as RegistrationStatus;
+  else if (f.status && ['PAID', 'PENDING', 'CANCELLED', 'AWAITING_APPROVAL'].includes(f.status)) where.status = f.status as RegistrationStatus;
   if (f.tribe) where.tribeId = f.tribe;
   if (f.ticket) where.ticketTypeId = f.ticket;
   if (f.q?.trim()) {

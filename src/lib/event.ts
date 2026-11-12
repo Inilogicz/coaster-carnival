@@ -38,8 +38,8 @@ export async function getAvailability(eventId: string, tx: Prisma.TransactionCli
 export type PublicTicket = { id: string; name: string; description: string; price: number; priceLabel: string; soldOut: boolean };
 
 /** Everything the public pages need, with tokens ready to fill admin copy. */
-export async function getPublicEvent() {
-  const event = await getActiveEvent();
+export async function getPublicEvent(eventId?: string) {
+  const event = eventId ? await db.event.findUnique({ where: { id: eventId }, include: eventInclude }) : await getActiveEvent();
   if (!event) return null;
   const availability = await getAvailability(event.id);
   const content = resolveContent(event.content);

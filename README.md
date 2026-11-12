@@ -50,3 +50,19 @@ Free tickets (price 0) skip Paystack and are confirmed straight away.
 ### Hero video size
 
 `public/assets/coastal-v5` holds the original HLS film in four versions (phone and desktop, each in SDR and HDR), about 370 MB in total. That's fine on Vercel, but it makes the git repo heavy. For production, consider moving the folder to Cloudinary, Cloudflare R2 or S3 and pasting the new `master.m3u8` URLs into **Admin → Page content → Hero & film**. The player also accepts plain `.mp4` files.
+
+### Guest email verification
+
+Guests must verify their email with a six-digit code before paid or free registration. Codes expire after 10 minutes, allow five attempts, and can be resent after one minute. A verified email is valid for booking in the current page for one hour; changing the email or refreshing requires verification again. Both API and form enforce verification. Sending requires working `RESEND_API_KEY`, `EMAIL_FROM` with a verified sender domain, and `SESSION_SECRET`.
+
+Deploy the email verification migration with `npm run db:deploy` before serving the updated app. Verification records store keyed hashes of codes, tokens and request IPs. Sending is limited to ten requests per IP per hour; the host must supply a trusted `x-real-ip` header (Vercel does). Other hosts must configure this at their reverse proxy; missing IPs share one limit.
+
+Before launch, request a code using an inbox you control, try an incorrect code, verify the correct code, then complete a test booking. Confirm a direct registration request without verification is rejected, changing the email requires another verification, and the final ticket email arrives.
+
+### Private registration for payments outside the website
+
+After deploying both new migrations, open **Admin → External payments** and create a private link for the event. Share it directly with guests who have already paid. The link has a random access key, is excluded from public navigation, and requests no indexing. It can be replaced or disabled from the same page. Anyone holding the link can forward it; possession permits submission, never approval.
+
+Guests verify their email, fill the existing registration form and include payer/payment reference details. Submissions are `AWAITING_APPROVAL`, do not reserve capacity, and receive no team or ticket. Check payment against your bank/payment records, then approve or reject in Admin. Approval runs under the event booking lock, checks event/ticket/team capacity, records the reviewer and time, assigns the team and attempts the ticket email. Approved guests appear in Attendees, where email can be resent. External payments do not create fictitious Paystack transactions. A duplicate email for the same event is rejected; the organiser must resolve existing registrations directly.
+
+Run `node --test tests/external-registration.test.mjs` for focused approval and private-key checks. Live database concurrency, mail delivery and the full browser flow still require deployment testing.

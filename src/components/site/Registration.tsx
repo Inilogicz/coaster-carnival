@@ -36,7 +36,7 @@ function clearDraft() {
   } catch {}
 }
 
-export function Registration({ event, hidden }: { event: PublicEvent; hidden: boolean }) {
+export function Registration({ event, hidden, external }: { event: PublicEvent; hidden: boolean; external?: { key: string } }) {
   const c = event.content.registration;
   const { t, lines } = makeText(event.tokens);
   const available = event.tickets.filter((ticket) => !ticket.soldOut);
@@ -45,6 +45,12 @@ export function Registration({ event, hidden }: { event: PublicEvent; hidden: bo
   const [day, setDay] = useState('');
   const [busy, setBusy] = useState<false | string>(false);
   const [error, setError] = useState('');
+  const [verification, setVerification] = useState({ email: '', token: '' });
+  const [emailCode, setEmailCode] = useState('');
+  const [codeSentTo, setCodeSentTo] = useState('');
+  const [verificationBusy, setVerificationBusy] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState('');
+  const [submitted, setSubmitted] = useState(false);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -65,7 +71,7 @@ export function Registration({ event, hidden }: { event: PublicEvent; hidden: bo
   }, []);
 
   const ticket = event.tickets.find((x) => x.id === ticketId);
-  const blocked = !event.bookingOpen ? 'Booking Opens Soon' : event.closed || !available.length ? 'Registration Closed' : null;
+  const blocked = external ? null : !event.bookingOpen ? 'Booking Opens Soon' : event.closed || !available.length ? 'Registration Closed' : null;
   const blockedMessage = !event.bookingOpen
     ? 'Bookings are not open yet. Contact the organiser for the confirmed venue.'
     : `All ${event.capacity} places are filled.`;
@@ -79,6 +85,35 @@ export function Registration({ event, hidden }: { event: PublicEvent; hidden: bo
     location.hash = '#home';
   }, []);
 
+  async function verifyEmail(checkCode: boolean) {
+    const field = formRef.current?.elements.namedItem('email') as HTMLInputElement;
+    if (!field?.reportValidity()) return;
+    const email = field.value.trim().toLowerCase();
+    setVerificationBusy(true);
+    setError('');
+    setVerificationMessage('');
+    try {
+      const response = await fetch('/api/email-verification', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, ...(checkCode ? { code: emailCode } : {}) }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Email verification failed. Please try again.');
+      if (checkCode) {
+        setVerification({ email, token: result.token });
+        setVerificationMessage('Email verified. You can now continue with your booking.');
+      } else {
+        setCodeSentTo(email);
+        setEmailCode('');
+        setVerificationMessage('Code sent. Check your inbox and spam folder. It expires in 10 minutes.');
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setVerificationBusy(false);
+    }
+  }
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
@@ -88,16 +123,25 @@ export function Registration({ event, hidden }: { event: PublicEvent; hidden: bo
 
     setError('');
     setBusy('Saving your details…');
-    void loadPaystack(); // warm up the popup script while the server responds
+    if (!external) void loadPaystack(); // warm up the popup script while the server responds
     try {
       const payload = Object.fromEntries(new FormData(form));
-      const response = await fetch('/api/registrations', {
+      if (String(payload.email).trim().toLowerCase() !== verification.email || !verification.token) {
+        throw new Error('Please verify your email address using the code before continuing.');
+      }
+      const response = await fetch(external ? '/api/external-registrations' : '/api/registrations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, emailVerificationToken: verification.token, ...(external ? { eventId: event.id, key: external.key } : {}) }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'We couldn’t save your registration. Please try again.');
+
+      if (result.kind === 'approval') {
+        clearDraft();
+        setSubmitted(true);
+        return;
+      }
 
       if (result.kind === 'confirmed') {
         form.reset();
@@ -127,6 +171,12 @@ export function Registration({ event, hidden }: { event: PublicEvent; hidden: bo
       setBusy(false);
     }
   }
+
+  if (submitted) return <main className="plain-page">
+    <h1>Registration submitted</h1>
+    <p>Your external payment is awaiting organiser approval. Once approved, we’ll assign your team and email your ticket. No further payment is needed here.</p>
+    <p>If you need to correct your details, contact the organiser on <a href={`tel:${event.contactPhone.replace(/\s/g, '')}`}>{event.contactPhone}</a>.</p>
+  </main>;
 
   return (
     <section id="register" className="screen registration" aria-labelledby="registration-title" hidden={hidden}>
@@ -168,7 +218,7 @@ export function Registration({ event, hidden }: { event: PublicEvent; hidden: bo
         <h2 id="registration-title" tabIndex={-1}>
           {t(c.formTitle)}
         </h2>
-        <p className="form-description">{t(c.formDescription)}</p>
+        <p className="form-description">{external ? 'Already paid outside the website? Verify your email and submit your details for organiser approval. Your team and ticket will be issued after approval.' : t(c.formDescription)}</p>
 
         <form
           ref={formRef}
@@ -195,7 +245,22 @@ export function Registration({ event, hidden }: { event: PublicEvent; hidden: bo
           </div>
           <div className="field">
             <label htmlFor="email">Email</label>
-            <input id="email" name="email" type="email" autoComplete="email" placeholder="you@example.com" required maxLength={254} />
+            <input id="email" name="email" type="email" autoComplete="email" placeholder="you@example.com" required maxLength={254} onChange={() => {
+              setVerification({ email: '', token: '' });
+              setCodeSentTo('');
+              setEmailCode('');
+              setVerificationMessage('');
+            }} />
+            <p className="field-hint">Verify your email before payment so we can send you your ticket.</p>
+            {!verification.token && <button type="button" className="button" disabled={verificationBusy || Boolean(busy)} onClick={() => void verifyEmail(false)}>
+              {verificationBusy ? 'Please wait…' : codeSentTo ? 'Resend code' : 'Send verification code'}
+            </button>}
+            {codeSentTo && !verification.token && <div>
+              <label htmlFor="email-code">6-digit code sent to {codeSentTo}</label>
+              <input id="email-code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={emailCode} onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, ''))} />
+              <button type="button" className="button" disabled={verificationBusy || emailCode.length !== 6 || Boolean(busy)} onClick={() => void verifyEmail(true)}>Verify email</button>
+            </div>}
+            <p role="status" className="field-hint">{verificationMessage}</p>
           </div>
           <div className="form-grid">
             <div className="field">
@@ -312,6 +377,11 @@ export function Registration({ event, hidden }: { event: PublicEvent; hidden: bo
             <input type="hidden" name="ticketTypeId" value={ticketId} />
           )}
 
+          {external && <div className="field">
+            <label htmlFor="external-payment-note">Payment details</label>
+            <textarea id="external-payment-note" name="paymentNote" required minLength={5} maxLength={1000} placeholder="Payer name, amount, date, payment method and transfer/reference number" />
+            <p className="field-hint">The organiser will check these details against the payment received.</p>
+          </div>}
           <div className="preview-note">
             <strong>Before you book</strong>
             {ticket && (
@@ -345,10 +415,10 @@ export function Registration({ event, hidden }: { event: PublicEvent; hidden: bo
               {error || blockedMessage}
             </p>
           )}
-          <button className="button primary submit" type="submit" disabled={Boolean(busy || blocked)}>
-            {blocked ?? (busy || (ticket && ticket.price === 0 ? 'Confirm My Free Place' : `${t(c.submitLabel)}${ticket ? ` · ${ticket.priceLabel}` : ''}`))}
+          <button className="button primary submit" type="submit" disabled={Boolean(busy || blocked || verificationBusy)}>
+            {blocked ?? (busy || (external ? 'Submit for approval' : ticket && ticket.price === 0 ? 'Confirm My Free Place' : `${t(c.submitLabel)}${ticket ? ` · ${ticket.priceLabel}` : ''}`))}
           </button>
-          {!blocked && ticket && ticket.price > 0 && <p className="secure-note">🔒 Payments are processed securely by Paystack.</p>}
+          {!external && !blocked && ticket && ticket.price > 0 && <p className="secure-note">🔒 Payments are processed securely by Paystack.</p>}
         </form>
       </div>
 

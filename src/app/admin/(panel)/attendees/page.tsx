@@ -48,6 +48,7 @@ export default async function AttendeesPage({ searchParams }: { searchParams: Pr
         <input name="q" defaultValue={params.q} placeholder="Search name, email, phone, ref, Instagram" className="input" aria-label="Search" />
         <select name="status" defaultValue={params.status ?? ''} className="input" aria-label="Status">
           <option value="">All statuses</option>
+          <option value="AWAITING_APPROVAL">Awaiting approval</option>
           <option value="PAID">Paid</option>
           <option value="HOLDING">Paying now</option>
           <option value="EXPIRED">Abandoned</option>
@@ -118,6 +119,7 @@ export default async function AttendeesPage({ searchParams }: { searchParams: Pr
                           <dt className="text-slate-500">Emergency</dt><dd>{r.emergencyContact}</dd>
                           <dt className="text-slate-500">Instagram</dt><dd>{r.instagram ?? '—'}</dd>
                           <dt className="text-slate-500">Registered</dt><dd>{formatDateTime(r.createdAt)}</dd>
+                          {r.externalPaymentNote && <><dt className="text-slate-500">External payment</dt><dd>{r.externalPaymentNote}</dd><dt className="text-slate-500">Approved by</dt><dd>{r.approvedBy ?? 'Awaiting review'} {r.approvedAt ? formatDateTime(r.approvedAt) : ''}</dd></>}
                           <dt className="text-slate-500">Paid</dt><dd>{formatDateTime(r.paidAt)}</dd>
                           <dt className="text-slate-500">Email</dt><dd>{r.emailSentAt ? `Sent ${formatDateTime(r.emailSentAt)}` : r.status === 'PAID' ? 'Not sent' : '—'}</dd>
                         </dl>

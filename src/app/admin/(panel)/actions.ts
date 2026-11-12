@@ -1,10 +1,11 @@
 'use server';
 
+import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/auth';
-import { applyPaystackTransaction, resendConfirmation } from '@/lib/booking';
+import { applyPaystackTransaction, confirmRegistration, resendConfirmation } from '@/lib/booking';
 import { contentSchema } from '@/lib/content';
 import { db } from '@/lib/db';
 import { verifyTransaction } from '@/lib/paystack';
@@ -76,7 +77,7 @@ export async function createEvent(input: { name: string; cloneFromId?: string })
     if (!source) throw new Error('There is no event to copy settings from.');
     const slugBase = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'event';
     const slug = `${slugBase}-${Date.now().toString(36)}`;
-    const { id: _id, slug: _slug, isActive: _a, createdAt: _c, updatedAt: _u, tribes, ticketTypes, content, ...fields } = source;
+    const { id: _id, slug: _slug, isActive: _a, createdAt: _c, updatedAt: _u, tribes, ticketTypes, content, externalRegistrationKey: _privateKey, ...fields } = source;
     await db.event.create({
       data: {
         ...fields,
@@ -211,5 +212,35 @@ export async function changePassword(input: { current: string; next: string }) {
     if (input.next.length < 10) throw new Error('Use at least 10 characters for the new password.');
     await db.admin.update({ where: { id: admin.id }, data: { passwordHash: await bcrypt.hash(input.next, 12) } });
     return 'Password updated.';
+  });
+}
+
+/* ---------- Private external payments ---------- */
+export async function setExternalRegistrationLink(eventId: string, enabled: boolean) {
+  return run(async () => {
+    await db.event.update({ where: { id: eventId }, data: { externalRegistrationKey: enabled ? crypto.randomBytes(32).toString('hex') : null } });
+    return enabled ? 'New private link created. Previous links no longer work.' : 'Private registration link disabled.';
+  });
+}
+
+export async function approveExternalRegistration(registrationId: string) {
+  return run(async () => {
+    const admin = await requireAdmin();
+    const reg = await db.registration.findUniqueOrThrow({ where: { id: registrationId } });
+    if (!reg.externalPaymentNote) throw new Error('This is not an external payment request.');
+    await confirmRegistration(registrationId, new Date(), admin.email);
+    return 'External payment approved. Team assigned and ticket email attempted. Check the attendee email status.';
+  });
+}
+
+export async function rejectExternalRegistration(registrationId: string) {
+  return run(async () => {
+    const reg = await db.registration.findUniqueOrThrow({ where: { id: registrationId } });
+    await db.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${reg.eventId}))`;
+      const result = await tx.registration.updateMany({ where: { id: registrationId, status: 'AWAITING_APPROVAL' }, data: { status: 'CANCELLED' } });
+      if (!result.count) throw new Error('This request has already been reviewed.');
+    });
+    return 'Request rejected. No team or ticket was issued.';
   });
 }

@@ -19,6 +19,7 @@ model Admin {
 model Event {
   id            String   @id @default(cuid())
   slug          String   @unique
+  externalRegistrationKey String?
   isActive      Boolean  @default(false)
   bookingOpen   Boolean  @default(true)
   name          String
@@ -81,6 +82,7 @@ model Tribe {
 }
 
 enum RegistrationStatus {
+  AWAITING_APPROVAL
   PENDING
   PAID
   CANCELLED
@@ -95,6 +97,9 @@ model Registration {
   ticketType       TicketType         @relation(fields: [ticketTypeId], references: [id])
   status           RegistrationStatus @default(PENDING)
   amount           Int // kobo, copied from the ticket at booking time
+  externalPaymentNote String?
+  approvedBy String?
+  approvedAt DateTime?
   fullName         String
   email            String
   phone            String
@@ -146,4 +151,16 @@ model Payment {
 
   @@index([registrationId])
   @@index([status, createdAt])
+}
+
+model EmailVerification {
+  email String @id
+  codeHash String
+  ipHash String
+  attempts Int @default(0)
+  sentAt DateTime @default(now())
+  expiresAt DateTime
+  tokenHash String?
+
+  @@index([ipHash, sentAt])
 }
