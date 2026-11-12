@@ -1,3 +1,4 @@
+import { VisitorAnalytics } from '@/components/admin/VisitorAnalytics';
 import Link from 'next/link';
 import { ColumnChart } from '@/components/admin/ColumnChart';
 import { ActionButton, PageHeader, StatusBadge } from '@/components/admin/ui';
@@ -58,7 +59,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
 
   const kpis = [
     { label: 'Paid guests', value: `${paid.toLocaleString()}`, sub: `of ${event.capacity} places · ${fill}% full` },
-    { label: 'Revenue', value: formatMoney(revenue, event.currency), sub: 'confirmed by Paystack' },
+    { label: 'Revenue', value: formatMoney(revenue, event.currency), sub: 'website + approved external payments' },
     { label: 'Paying right now', value: holding.toLocaleString(), sub: 'places held for 30 min' },
     { label: 'Conversion', value: `${conversion}%`, sub: `${total} sign-ups · ${pending - holding} abandoned` },
   ];
@@ -94,6 +95,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           </div>
         ))}
       </section>
+
+      <VisitorAnalytics eventId={event.id} />
 
       <section className="card mt-4 p-5">
         <div className="mb-2 flex items-baseline justify-between text-sm">

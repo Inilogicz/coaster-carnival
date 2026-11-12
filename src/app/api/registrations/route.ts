@@ -1,3 +1,4 @@
+import { linkAnalyticsRegistration } from '@/lib/analytics';
 import { NextResponse } from 'next/server';
 import { appUrl, handleError } from '@/lib/api';
 import { startBooking } from '@/lib/booking';
@@ -10,7 +11,9 @@ export async function POST(request: Request) {
     const body = await request.json();
     const input = registrationSchema.parse(body);
     await requireVerifiedEmail(input.email, typeof body.emailVerificationToken === 'string' ? body.emailVerificationToken : '');
-    return NextResponse.json(await startBooking(input, appUrl(request)));
+    const result = await startBooking(input, appUrl(request));
+    await linkAnalyticsRegistration(body.visitorId, input.email, 'WEBSITE');
+    return NextResponse.json(result);
   } catch (error) {
     return handleError(error);
   }

@@ -24,6 +24,12 @@ export default async function PrivacyPage() {
         Payments are processed by Paystack. We never see or store your card details; we keep the payment reference, amount, status
         and payment channel so the organiser can confirm your booking. Paid guests receive a tribe and a confirmation email.
       </p>
+      <p>
+        We use an anonymous random browser identifier stored on your device to count visitors and understand how many people
+        start, attempt, and complete registration. We store a keyed hash of that identifier and the steps reached; we do not
+        store IP addresses, page URLs, or form field contents in visitor analytics. If you submit, the analytics record is linked
+        to your registration so organisers can measure confirmed bookings. Clearing browser storage or changing devices can count as another visitor.
+      </p>
       <p>Registration and payment details are available only to authorised organisers.</p>
       {contact && (
         <p>

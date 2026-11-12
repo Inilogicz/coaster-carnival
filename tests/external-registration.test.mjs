@@ -156,3 +156,47 @@ test('pagination bounds invalid pages and computes database limits', () => {
   assert.equal(paginate('2', 24, 12).skip, 12);
   assert.equal(paginate('2', 50, 50).page, 1);
 });
+
+test('analytics deduplicates browsers and preserves first funnel timestamps', async () => {
+  process.env.SESSION_SECRET ||= 'local-test-secret-for-analytics-only';
+  const records = new Map();
+  const visits = {
+    upsert: async ({ where, create, update }) => {
+      const key = JSON.stringify(where.eventId_visitorHash_source);
+      if (!records.has(key)) records.set(key, { ...create });
+      else Object.assign(records.get(key), update);
+    },
+    updateMany: async ({ where, data }) => {
+      for (const row of records.values()) {
+        if (Object.entries(where).every(([key, value]) => value === null ? row[key] == null : row[key] === value)) Object.assign(row, data);
+      }
+    },
+  };
+  const { recordAnalytics } = load('src/lib/analytics.ts', { zod: { z }, './db': { db: { analyticsVisit: visits } } });
+  const input = { eventId: 'event', visitorId: '9da31c38-2389-4a5a-97b8-76b3565d4de5', source: 'WEBSITE' };
+  await recordAnalytics({ ...input, action: 'VISIT' });
+  await recordAnalytics({ ...input, action: 'VISIT' });
+  assert.equal(records.size, 1);
+  assert.notEqual([...records.values()][0].visitorHash, input.visitorId);
+  await recordAnalytics({ ...input, action: 'ATTEMPT' });
+  const first = [...records.values()][0].startedAt;
+  assert.ok(first instanceof Date);
+  assert.ok([...records.values()][0].attemptedAt instanceof Date);
+  await recordAnalytics({ ...input, action: 'START' });
+  assert.equal([...records.values()][0].startedAt, first);
+  await recordAnalytics({ ...input, source: 'EXTERNAL', action: 'VISIT' });
+  assert.equal(records.size, 2);
+});
+
+test('analytics rejects invalid identifiers and cannot block a successful booking', async () => {
+  const { analyticsSchema, linkAnalyticsRegistration } = load('src/lib/analytics.ts', {
+    zod: { z }, './db': { db: { registration: { findFirst: async () => { throw new Error('analytics unavailable'); } } } },
+  });
+  assert.equal(analyticsSchema.safeParse({ visitorId: 'bad', eventId: 'event', source: 'WEBSITE', action: 'VISIT' }).success, false);
+  await linkAnalyticsRegistration(undefined, 'guest@example.com', 'WEBSITE');
+  const previous = console.error;
+  try {
+    console.error = () => {};
+    await assert.doesNotReject(linkAnalyticsRegistration('9da31c38-2389-4a5a-97b8-76b3565d4de5', 'guest@example.com', 'EXTERNAL'));
+  } finally { console.error = previous; }
+});

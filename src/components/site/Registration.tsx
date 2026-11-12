@@ -6,6 +6,7 @@ import type { Confirmation } from '@/lib/booking';
 import type { PublicEvent } from '@/lib/event';
 import { daysInMonth } from '@/lib/zodiac';
 import { GENDERS } from '@/lib/validation';
+import { analyticsVisitorId, trackAnalytics } from './analytics-client';
 import { SubmissionSuccess } from './SubmissionSuccess';
 import { PaymentEvidence } from './PaymentEvidence';
 import { ConfirmationModal } from './ConfirmationModal';
@@ -56,6 +57,9 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
   const [submitted, setSubmitted] = useState<{ firstName: string; email: string; reference?: string; acknowledgmentSent?: boolean } | null>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const analyticsSource = external ? 'EXTERNAL' : 'WEBSITE';
+  useEffect(() => { trackAnalytics(event.id, analyticsSource, 'VISIT'); }, [event.id, analyticsSource]);
+
 
   // Restore unsent answers once on load; month, day and ticket are React state, the rest are plain inputs.
   useEffect(() => {
@@ -119,6 +123,7 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    trackAnalytics(event.id, analyticsSource, 'ATTEMPT');
     const form = e.currentTarget;
     const nameInput = form.elements.namedItem('fullName') as HTMLInputElement;
     nameInput.setCustomValidity(nameInput.value.trim().length < 2 ? 'Please enter your name.' : '');
@@ -134,6 +139,7 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
       }
       const submission = new FormData(form);
       submission.set('emailVerificationToken', verification.token);
+      submission.set('visitorId', analyticsVisitorId());
       if (external) {
         submission.set('eventId', event.id);
         submission.set('key', external.key);
@@ -143,7 +149,7 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
         method: 'POST',
         ...(external ? { body: submission } : {
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...payload, emailVerificationToken: verification.token }),
+          body: JSON.stringify({ ...payload, emailVerificationToken: verification.token, visitorId: analyticsVisitorId() }),
         }),
       });
       const result = await response.json();
@@ -232,6 +238,8 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
           ref={formRef}
           id="attendee-form"
           onSubmit={onSubmit}
+          onFocusCapture={() => trackAnalytics(event.id, analyticsSource, 'START')}
+          onInvalidCapture={() => trackAnalytics(event.id, analyticsSource, 'ATTEMPT')}
           onInput={(e) => {
             setError('');
             saveDraft(e.currentTarget);
