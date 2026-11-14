@@ -139,7 +139,7 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
     try {
       const payload = Object.fromEntries(new FormData(form));
       const guests = Array.from({ length: external ? 0 : quantity - 1 }, (_, i) => Object.fromEntries(
-        ['fullName', 'phone', 'gender', 'birthMonth', 'birthDay', 'emergencyContact', 'instagram'].map((key) => [key, payload[`guest${i}.${key}`] ?? ''])
+        ['fullName', 'email', 'phone', 'gender', 'birthMonth', 'birthDay', 'emergencyContact', 'instagram'].map((key) => [key, payload[`guest${i}.${key}`] ?? ''])
       ));
       if (String(payload.email).trim().toLowerCase() !== verification.email || !verification.token) {
         throw new Error('Please verify your email address using the code before continuing.');
@@ -473,6 +473,11 @@ function GuestFields({ index }: { index: number }) {
   return <fieldset ref={fieldsetRef} className="birthday-fields">
     <legend>Guest {index + 2}</legend>
     <p className="field-hint">This guest receives their own ticket and tribe assignment.</p>
+    <div className="field">
+      <label htmlFor={prefix + 'email'}>Email <span>(optional)</span></label>
+      <input id={prefix + 'email'} name={prefix + 'email'} type="email" maxLength={254} placeholder="guest@example.com" />
+      <p className="field-hint">We’ll send this guest their own ticket here. No verification needed. You’ll still receive all tickets at your verified email.</p>
+    </div>
     {(['fullName', 'phone', 'emergencyContact'] as const).map((key) => <div className="field" key={key}>
       <label htmlFor={prefix + key}>{key === 'fullName' ? 'Full name' : key === 'phone' ? 'Phone number' : 'Emergency contact'}</label>
       <input id={prefix + key} name={prefix + key} required type={key === 'fullName' ? 'text' : 'tel'} minLength={key === 'fullName' ? 2 : undefined} maxLength={key === 'fullName' ? 100 : 25} pattern={key === 'fullName' ? undefined : PHONE_PATTERN} />

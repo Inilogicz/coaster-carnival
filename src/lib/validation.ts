@@ -29,6 +29,6 @@ export type RegistrationInput = z.infer<typeof registrationSchema>;
 
 // One verified buyer pays for up to ten individually assigned guests.
 export const bookingSchema = registrationSchema.safeExtend({
-  guests: z.array(z.object(registrationSchema.shape).omit({ email: true, ticketTypeId: true, termsAccepted: true }).refine((v) => v.birthDay <= daysInMonth(v.birthMonth), { message: 'Choose a valid guest birthday.', path: ['birthDay'] })).max(9).default([]),
+  guests: z.array(z.object(registrationSchema.shape).omit({ ticketTypeId: true, termsAccepted: true }).extend({ email: z.union([registrationSchema.shape.email, z.literal('')]).optional() }).refine((v) => v.birthDay <= daysInMonth(v.birthMonth), { message: 'Choose a valid guest birthday.', path: ['birthDay'] })).max(9).default([]),
 });
 export type BookingInput = z.infer<typeof bookingSchema>;

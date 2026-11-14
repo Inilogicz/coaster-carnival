@@ -69,7 +69,7 @@ export async function startBooking(input: BookingInput, appUrl: string): Promise
       const requested = [input, ...input.guests];
       const keys = ['fullName', 'phone', 'gender', 'birthMonth', 'birthDay', 'emergencyContact'] as const;
       if (existing.ticketTypeId !== input.ticketTypeId || saved.length !== requested.length ||
-          saved.some((guest, i) => keys.some((key) => guest[key] !== requested[i][key]))) {
+          saved.some((guest, i) => keys.some((key) => guest[key] !== requested[i][key]) || guest.email !== (requested[i].email || input.email))) {
         throw new BookingError('A payment has already been started for this email. Keep the original ticket and guest details to retry, or contact the organiser to change them.', 409);
       }
       await tx.registration.updateMany({ where: { OR: [{ id: existing.id }, { bookingParentId: existing.id }] }, data: { holdExpiresAt: new Date(Date.now() + HOLD_MINUTES * 60_000) } });
@@ -98,7 +98,7 @@ export async function startBooking(input: BookingInput, appUrl: string): Promise
     for (const guest of input.guests) {
       const birthday = zodiacForBirthday(guest.birthMonth, guest.birthDay)!;
       await tx.registration.create({ data: {
-        ...data, ...guest, email: input.email, eventId: event.id,
+        ...data, ...guest, email: guest.email || input.email, eventId: event.id,
         instagram: guest.instagram ? '@' + guest.instagram.replace(/^@/, '') : null,
         zodiacSign: birthday.sign, zodiacElement: birthday.element,
         reference: `CC-${code(8)}`, bookingParentId: primary.id,
@@ -237,12 +237,25 @@ export async function confirmRegistration(registrationId: string, paidAt: Date |
   });
 
   const confirmation = await getConfirmation(registrationId);
-  const claimed = await db.registration.updateMany({ where: { id: registrationId, emailSentAt: null }, data: { emailSentAt: new Date() } });
-  if (claimed.count) {
-    const sent = await sendConfirmationEmail(confirmation).catch(() => false);
-    if (!sent) await db.registration.update({ where: { id: registrationId }, data: { emailSentAt: null } });
-  }
+  // Claim delivery independently so a failed guest email never blocks the buyer's copy.
+  await sendClaimedConfirmation(registrationId, confirmation);
+  const guests = await db.registration.findMany({
+    where: { bookingParentId: registrationId, status: 'PAID', email: { not: confirmation.email } },
+    select: { id: true },
+  });
+  for (const guest of guests) await sendClaimedConfirmation(guest.id);
   return confirmation;
+}
+
+async function sendClaimedConfirmation(registrationId: string, confirmation?: Confirmation) {
+  const claimed = await db.registration.updateMany({ where: { id: registrationId, status: 'PAID', emailSentAt: null }, data: { emailSentAt: new Date() } });
+  if (!claimed.count) return;
+  try {
+    const sent = await sendConfirmationEmail(confirmation ?? await getConfirmation(registrationId));
+    if (!sent) await db.registration.update({ where: { id: registrationId }, data: { emailSentAt: null } });
+  } catch {
+    await db.registration.update({ where: { id: registrationId }, data: { emailSentAt: null } });
+  }
 }
 
 export async function getConfirmation(registrationId: string) {
