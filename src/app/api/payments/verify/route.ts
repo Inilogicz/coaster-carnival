@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { handleError } from '@/lib/api';
-import { applyPaystackTransaction, getConfirmation } from '@/lib/booking';
+import { applyPaystackTransaction, confirmRegistration } from '@/lib/booking';
 import { db } from '@/lib/db';
 import { verifyTransaction } from '@/lib/paystack';
 
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     const payment = await db.payment.findUnique({ where: { reference }, select: { status: true, registrationId: true } });
     if (!payment) return NextResponse.json({ error: 'We couldn’t find that payment.' }, { status: 404 });
 
-    if (payment.status === 'SUCCESS') return NextResponse.json({ status: 'success', confirmation: await getConfirmation(payment.registrationId) });
+    if (payment.status === 'SUCCESS') return NextResponse.json({ status: 'success', confirmation: await confirmRegistration(payment.registrationId, null) });
 
     const trx = await verifyTransaction(reference);
     const confirmation = await applyPaystackTransaction(trx);

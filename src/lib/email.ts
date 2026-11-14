@@ -15,7 +15,7 @@ export async function sendConfirmationEmail(c: Confirmation) {
     to: c.email,
     subject,
     html: confirmationEmailHtml(c, siteUrl() + c.ticketUrl),
-    text: `You’re in, ${c.firstName}! Your place at ${c.eventName} is confirmed.\n\nBooking: ${c.reference}\nTicket: ${c.ticketName} · ${c.amountLabel}\n${c.tribe ? `Tribe: ${c.tribe.name} · ${c.tribe.colorName}\n` : ''}When: ${c.dateLong} · ${c.timeLabel}\nTake-off: ${c.takeOffPoint}\nDestination: ${c.destination}\n\nView and download your ticket: ${siteUrl() + c.ticketUrl}\nShow its QR code at take-off.\n\nQuestions? ${c.contactPhone}\n${c.refundPolicy}`,
+    text: `You’re in, ${c.firstName}! Your place at ${c.eventName} is confirmed.\n\nBooking: ${c.reference}\nTicket: ${c.ticketName} · ${c.amountLabel}\n${c.tribe ? `Tribe: ${c.tribe.name} · ${c.tribe.colorName}\n` : ''}When: ${c.dateLong} · ${c.timeLabel}\nTake-off: ${c.takeOffPoint}\nDestination: ${c.destination}\n\nView and download your ticket: ${siteUrl() + c.ticketUrl}\nShow its QR code at take-off.\n${c.guests.map((g) => `${g.fullName} · ${g.tribe}: ${siteUrl() + g.ticketUrl}`).join('\n')}\n\nQuestions? ${c.contactPhone}\n${c.refundPolicy}`,
   });
   if (error) {
     console.error('[email] send failed', error);

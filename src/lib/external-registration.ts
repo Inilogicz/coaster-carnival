@@ -20,7 +20,7 @@ export async function submitExternalRegistration(eventId: string, key: string, i
     if (!event?.isActive || !validPrivateKey(event.externalRegistrationKey, key)) throw new BookingError('This private registration link is unavailable.', 404);
     const ticket = await tx.ticketType.findFirst({ where: { id: input.ticketTypeId, eventId, active: true } });
     if (!ticket) throw new BookingError('Choose an available ticket.');
-    const existing = await tx.registration.findUnique({ where: { eventId_email: { eventId, email: input.email } } });
+    const existing = await tx.registration.findFirst({ where: { eventId, email: input.email, bookingParentId: null } });
     if (existing) throw new BookingError('This email already has a registration or approval request. Contact the organiser for help.', 409);
     const zodiac = zodiacForBirthday(input.birthMonth, input.birthDay)!;
     const registration = await tx.registration.create({ data: {

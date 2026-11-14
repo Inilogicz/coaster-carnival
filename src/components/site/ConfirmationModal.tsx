@@ -72,6 +72,11 @@ export function ConfirmationModal({ confirmation, onClose }: { confirmation: Con
               Download ticket
             </a>
           </div>
+          {c.guests.map((guest) => <div className="cc-modal-ticket" key={guest.reference}>
+            <p><strong>{guest.fullName}</strong>{guest.tribe && ` · ${guest.tribe}`}</p>
+            <a className="button primary" href={guest.ticketUrl} target="_blank" rel="noopener">View guest ticket</a>
+            <a className="button cc-ticket-print" href={guest.ticketImageUrl} download={`${guest.reference}.png`}>Download ticket</a>
+          </div>)}
           <button className="button cc-ticket-print" type="button" onClick={onClose}>
             Back to the invite
           </button>

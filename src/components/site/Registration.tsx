@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Confirmation } from '@/lib/booking';
 import type { PublicEvent } from '@/lib/event';
+import { formatMoney } from '@/lib/format';
 import { daysInMonth } from '@/lib/zodiac';
 import { GENDERS } from '@/lib/validation';
 import { analyticsVisitorId, trackAnalytics } from './analytics-client';
@@ -45,6 +46,7 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
   const { t, lines } = makeText(event.tokens);
   const available = event.tickets.filter((ticket) => !ticket.soldOut);
   const [ticketId, setTicketId] = useState(available[0]?.id ?? '');
+  const [quantity, setQuantity] = useState(1);
   const [month, setMonth] = useState('');
   const [day, setDay] = useState('');
   const [busy, setBusy] = useState<false | string>(false);
@@ -71,6 +73,7 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
       const field = form.elements.namedItem(name);
       if (field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement) field.value = value;
     }
+    if (!external) setQuantity(Math.min(10, Math.max(1, Number(draft.quantity) || 1)));
     setMonth(draft.birthMonth ?? '');
     setDay(draft.birthDay ?? '');
     if (available.some((x) => x.id === draft.ticketTypeId)) setTicketId(draft.ticketTypeId);
@@ -78,6 +81,7 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
   }, []);
 
   const ticket = event.tickets.find((x) => x.id === ticketId);
+  const totalLabel = ticket ? formatMoney(ticket.price * quantity, event.currency) : '';
   const blocked = external ? null : !event.bookingOpen ? 'Booking Opens Soon' : event.closed || !available.length ? 'Registration Closed' : null;
   const blockedMessage = !event.bookingOpen
     ? 'Bookings are not open yet. Contact the organiser for the confirmed venue.'
@@ -134,6 +138,9 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
     if (!external) void loadPaystack(); // warm up the popup script while the server responds
     try {
       const payload = Object.fromEntries(new FormData(form));
+      const guests = Array.from({ length: external ? 0 : quantity - 1 }, (_, i) => Object.fromEntries(
+        ['fullName', 'phone', 'gender', 'birthMonth', 'birthDay', 'emergencyContact', 'instagram'].map((key) => [key, payload[`guest${i}.${key}`] ?? ''])
+      ));
       if (String(payload.email).trim().toLowerCase() !== verification.email || !verification.token) {
         throw new Error('Please verify your email address using the code before continuing.');
       }
@@ -149,7 +156,7 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
         method: 'POST',
         ...(external ? { body: submission } : {
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...payload, emailVerificationToken: verification.token, visitorId: analyticsVisitorId() }),
+          body: JSON.stringify({ ...payload, guests, emailVerificationToken: verification.token, visitorId: analyticsVisitorId() }),
         }),
       });
       const result = await response.json();
@@ -246,6 +253,13 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
           }}
           noValidate={false}
         >
+          {!external && <div className="field">
+            <label htmlFor="quantity">Number of tickets</label>
+            <select id="quantity" name="quantity" value={quantity} disabled={Boolean(busy)} onChange={(e) => setQuantity(Number(e.target.value))}>
+              {Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}
+            </select>
+            <p className="field-hint">Your details below are for ticket 1. All tickets will be sent to your verified email.</p>
+          </div>}
           <div className="field">
             <label htmlFor="full-name">Full Name</label>
             <input
@@ -364,6 +378,8 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
             />
           </div>
 
+          {!external && Array.from({ length: quantity - 1 }, (_, i) => <GuestFields key={i} index={i} />)}
+
           {event.tickets.length > 1 ? (
             <fieldset className="ticket-options">
               <legend>Ticket</legend>
@@ -398,7 +414,7 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
             <strong>Before you book</strong>
             {ticket && (
               <p>
-                {ticket.priceLabel}
+                {external ? ticket.priceLabel : `${quantity} ticket${quantity === 1 ? '' : 's'} · ${totalLabel}`}
                 {ticket.description ? ` · ${ticket.name}: ${ticket.description}` : ` · ${ticket.name}`}
               </p>
             )}
@@ -428,7 +444,7 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
             </p>
           )}
           <button className="button primary submit" type="submit" disabled={Boolean(busy || blocked || verificationBusy)}>
-            {blocked ?? (busy || (external ? 'Submit for approval' : ticket && ticket.price === 0 ? 'Confirm My Free Place' : `${t(c.submitLabel)}${ticket ? ` · ${ticket.priceLabel}` : ''}`))}
+            {blocked ?? (busy || (external ? 'Submit for approval' : ticket && ticket.price === 0 ? 'Confirm My Free Place' : `${quantity > 1 ? `Pay for ${quantity} tickets` : t(c.submitLabel)}${ticket ? ` · ${totalLabel}` : ''}`))}
           </button>
           {!external && !blocked && ticket && ticket.price > 0 && <p className="secure-note">🔒 Payments are processed securely by Paystack.</p>}
         </form>
@@ -437,4 +453,34 @@ export function Registration({ event, hidden, external }: { event: PublicEvent; 
       {confirmation && <ConfirmationModal confirmation={confirmation} onClose={closeModal} />}
     </section>
   );
+}
+
+function GuestFields({ index }: { index: number }) {
+  const [month, setMonth] = useState('');
+  const prefix = `guest${index}.`;
+  const fieldsetRef = useRef<HTMLFieldSetElement>(null);
+  useEffect(() => {
+    const draft = readDraft();
+    if (!draft) return;
+    setMonth(draft[prefix + 'birthMonth'] ?? '');
+    // Restore after the birthday options have rendered.
+    requestAnimationFrame(() => {
+      fieldsetRef.current?.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select').forEach((field) => {
+        if (draft[field.name] !== undefined) field.value = draft[field.name];
+      });
+    });
+  }, [prefix]);
+  return <fieldset ref={fieldsetRef} className="birthday-fields">
+    <legend>Guest {index + 2}</legend>
+    <p className="field-hint">This guest receives their own ticket and tribe assignment.</p>
+    {(['fullName', 'phone', 'emergencyContact'] as const).map((key) => <div className="field" key={key}>
+      <label htmlFor={prefix + key}>{key === 'fullName' ? 'Full name' : key === 'phone' ? 'Phone number' : 'Emergency contact'}</label>
+      <input id={prefix + key} name={prefix + key} required type={key === 'fullName' ? 'text' : 'tel'} minLength={key === 'fullName' ? 2 : undefined} maxLength={key === 'fullName' ? 100 : 25} pattern={key === 'fullName' ? undefined : PHONE_PATTERN} />
+    </div>)}
+    <div className="field"><label htmlFor={prefix + 'gender'}>Gender</label><select id={prefix + 'gender'} name={prefix + 'gender'} required defaultValue=""><option value="">Select gender</option>{GENDERS.map((g) => <option key={g}>{g}</option>)}</select></div>
+    <div className="form-grid">
+      <div className="field"><label htmlFor={prefix + 'birthMonth'}>Birth month</label><select id={prefix + 'birthMonth'} name={prefix + 'birthMonth'} required value={month} onChange={(e) => setMonth(e.target.value)}><option value="">Select month</option>{MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}</select></div>
+      <div className="field"><label htmlFor={prefix + 'birthDay'}>Birth day</label><select id={prefix + 'birthDay'} name={prefix + 'birthDay'} required defaultValue=""><option value="">Select day</option>{Array.from({ length: month ? daysInMonth(Number(month)) : 31 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></div>
+    </div>
+  </fieldset>;
 }

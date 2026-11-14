@@ -91,6 +91,9 @@ enum RegistrationStatus {
 
 model Registration {
   id               String             @id @default(cuid())
+  bookingParentId String?
+  bookingParent Registration? @relation("BookingGuests", fields: [bookingParentId], references: [id])
+  bookingGuests Registration[] @relation("BookingGuests")
   reference        String             @unique
   eventId          String
   event            Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
@@ -125,7 +128,7 @@ model Registration {
   analyticsVisits AnalyticsVisit[]
   payments Payment[]
 
-  @@unique([eventId, email])
+  @@index([eventId, email])
   @@index([eventId, status])
 }
 
